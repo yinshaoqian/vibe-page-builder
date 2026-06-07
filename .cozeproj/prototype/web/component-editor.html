@@ -172,6 +172,18 @@
           <span class="truncate">FooterBar.vue</span>
         </a>
       </div>
+
+      <!-- ===== 绑定清单区域 ===== -->
+      <div class="border-t border-outline-variant/10 shrink-0">
+        <div class="px-3 pt-3 pb-2 flex items-center justify-between">
+          <span class="text-xs font-semibold text-on-surface-variant/70 uppercase tracking-wider">事件绑定清单</span>
+          <span class="text-[11px] text-on-surface-variant/50" id="binding-count">0 项</span>
+        </div>
+        <div class="px-2 pb-3 max-h-48 overflow-y-auto space-y-0.5" id="binding-list">
+          <!-- 绑定项由 JS 动态插入 -->
+          <div class="text-xs text-on-surface-variant/50 text-center py-4" id="binding-empty">暂无绑定，请切换到「事件绑定」Tab 添加</div>
+        </div>
+      </div>
     </aside>
 
     <!-- @main-content:start -->
@@ -193,6 +205,8 @@
         <button class="px-4 py-2.5 text-sm font-medium rounded-t-md border-b-2 border-transparent text-on-surface-variant hover:text-on-surface transition-colors editor-tab-btn"
                 id="tab-color" data-tab="panel-color">颜色调整</button>
         <button class="px-4 py-2.5 text-sm font-medium rounded-t-md border-b-2 border-transparent text-on-surface-variant hover:text-on-surface transition-colors editor-tab-btn"
+                id="tab-events" data-tab="panel-events">事件绑定</button>
+        <button class="px-4 py-2.5 text-sm font-medium rounded-t-md border-b-2 border-transparent text-on-surface-variant hover:text-on-surface transition-colors editor-tab-btn"
                 id="tab-dict" data-tab="panel-dict">字典预览</button>
       </div>
 
@@ -205,6 +219,9 @@
           <div class="flex items-center gap-2">
             <button id="btn-add-key" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-primary text-on-primary hover:opacity-90 active:scale-[0.98] transition-all">
               <i data-lucide="plus" class="w-3.5 h-3.5"></i>添加文本
+            </button>
+            <button id="btn-ai-translate" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-success/15 text-success border border-success/30 hover:bg-success/20 transition-all" title="AI 一键翻译（待对接）">
+              <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>AI 一键翻译
             </button>
           </div>
           <span class="text-xs text-on-surface-variant/50">共 <span id="i18n-row-count">6</span> 个文本 key</span>
@@ -432,7 +449,80 @@
         </div>
       </div>
 
-      <!-- ===== 面板3：字典预览（默认隐藏） ===== -->
+      <!-- ===== 面板3：事件绑定（默认隐藏） ===== -->
+      <div class="editor-panel hidden" id="panel-events">
+        <!-- 操作说明 -->
+        <div class="flex items-center justify-between mb-4">
+          <p class="text-sm text-on-surface-variant">为组件模板元素绑定点击/双击事件，触发 EventBus 函数。选择元素后可配置事件类型与 EventBus 名称。</p>
+          <div class="flex items-center gap-2">
+            <button id="btn-clear-bindings" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors">
+              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>清空绑定
+            </button>
+          </div>
+        </div>
+
+        <!-- EventBus 配置 -->
+        <div class="bg-surface rounded-lg shadow-card overflow-hidden mb-4">
+          <div class="px-4 py-2.5 bg-surface-container border-b border-outline-variant/10 flex items-center gap-3">
+            <span class="text-xs font-semibold text-on-surface-variant shrink-0">EventBus 配置</span>
+            <div class="flex-1 flex items-center gap-3">
+              <div class="flex items-center gap-2 flex-1">
+                <span class="text-xs text-on-surface-variant shrink-0">函数名</span>
+                <input type="text" id="eventbus-name" value="$emit" class="flex-1 bg-surface border border-outline-variant/30 rounded-md px-2.5 py-1.5 text-xs font-mono text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors" placeholder="EventBus 函数名" />
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-xs text-on-surface-variant shrink-0">事件类型</span>
+                <select id="event-type-select" class="bg-surface border border-outline-variant/30 rounded-md px-2 py-1.5 text-xs text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors">
+                  <option value="click">点击 (click)</option>
+                  <option value="dblclick">双击 (dblclick)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 选取器区域 -->
+        <div class="bg-surface rounded-lg shadow-card overflow-hidden">
+          <div class="px-4 py-2.5 bg-surface-container border-b border-outline-variant/10 flex items-center justify-between">
+            <span class="text-xs font-semibold text-on-surface-variant">元素选取器</span>
+          </div>
+          <div class="p-4">
+            <!-- 选取器状态 -->
+            <div class="flex items-center gap-3 mb-3" id="picker-status-bar">
+              <button id="btn-toggle-picker" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors">
+                <i data-lucide="pointer" class="w-3.5 h-3.5"></i>添加 EventBus
+              </button>
+              <span class="text-xs text-on-surface-variant/60" id="picker-status">点击右侧预览区中的元素进行绑定</span>
+            </div>
+
+            <!-- 选取操作区（选取中/已选取时显示） -->
+            <div class="hidden" id="picker-action-area">
+              <!-- 当前选取元素信息 -->
+              <div class="flex items-center gap-3 px-3 py-2.5 bg-primary/5 rounded-md border border-primary/20 mb-3">
+                <i data-lucide="crosshair" class="w-4 h-4 text-primary shrink-0"></i>
+                <div class="flex-1 min-w-0">
+                  <p class="text-xs font-medium text-on-surface">已选取：<span id="selected-element-info" class="font-mono text-primary">—</span></p>
+                  <p class="text-[10px] text-on-surface-variant/60 mt-0.5">将绑定 <span id="selected-event-type-label">click</span> 事件 → <span id="selected-eventbus-label" class="font-mono">$emit</span></p>
+                </div>
+              </div>
+              <!-- 操作按钮 -->
+              <div class="flex items-center gap-2">
+                <button id="btn-confirm-binding" class="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-md text-xs font-medium bg-primary text-on-primary hover:opacity-90 transition-all disabled:opacity-40 disabled:cursor-not-allowed" disabled>
+                  <i data-lucide="check" class="w-3.5 h-3.5"></i>确认绑定
+                </button>
+                <button id="btn-cancel-binding" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors disabled:opacity-40 disabled:cursor-not-allowed" disabled>
+                  <i data-lucide="x" class="w-3.5 h-3.5"></i>取消
+                </button>
+                <button id="btn-reselect-binding" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors disabled:opacity-40 disabled:cursor-not-allowed" disabled>
+                  <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>重选
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== 面板4：字典预览（默认隐藏） ===== -->
       <div class="editor-panel hidden" id="panel-dict">
         <!-- 操作栏 -->
         <div class="flex items-center justify-between mb-4">
@@ -535,65 +625,65 @@
             <!-- ===== 组件模拟预览 ===== -->
             <div class="bg-white rounded-lg shadow-card overflow-hidden" id="preview-component">
               <!-- 组件头部 -->
-              <div class="px-4 py-3 flex items-center justify-between border-b border-outline-variant/10" id="preview-header">
-                <div class="flex items-center gap-2.5">
-                  <div class="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center">
-                    <i data-lucide="users" class="w-3.5 h-3.5 text-primary"></i>
+              <div class="px-4 py-3 flex items-center justify-between border-b border-outline-variant/10" data-el-id="header" data-el-tag="div.header" id="preview-header">
+                <div class="flex items-center gap-2.5" data-el-id="header-left">
+                  <div class="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center" data-el-id="header-icon">
+                    <i data-lucide="users" class="w-3.5 h-3.5 text-primary" data-el-id="header-icon-svg"></i>
                   </div>
-                  <span class="text-sm font-semibold text-on-surface" id="preview-title">用户表格</span>
+                  <span class="text-sm font-semibold text-on-surface" data-el-id="preview-title" id="preview-title">用户表格</span>
                 </div>
-                <div class="flex items-center gap-1.5">
-                  <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-success/15 text-success">active</span>
+                <div class="flex items-center gap-1.5" data-el-id="header-right">
+                  <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-success/15 text-success" data-el-id="header-badge">active</span>
                 </div>
               </div>
               <!-- 组件描述 -->
-              <div class="px-4 py-2 border-b border-outline-variant/5">
-                <p class="text-xs text-on-surface-variant" id="preview-description">展示用户信息列表，支持编辑和删除操作</p>
+              <div class="px-4 py-2 border-b border-outline-variant/5" data-el-id="desc-row" data-el-tag="div.description">
+                <p class="text-xs text-on-surface-variant" data-el-id="preview-description" id="preview-description">展示用户信息列表，支持编辑和删除操作</p>
               </div>
               <!-- 组件搜索栏 -->
-              <div class="px-4 py-2.5 border-b border-outline-variant/5">
+              <div class="px-4 py-2.5 border-b border-outline-variant/5" data-el-id="search-row" data-el-tag="div.search">
                 <div class="relative">
-                  <i data-lucide="search" class="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-on-surface-variant/40 pointer-events-none"></i>
-                  <input id="preview-search-input" type="text" placeholder="请输入搜索关键词" class="w-full bg-surface-container border-none rounded-md pl-8 pr-3 py-1.5 text-xs text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors" readonly />
+                  <i data-lucide="search" class="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-on-surface-variant/40 pointer-events-none" data-el-id="search-icon"></i>
+                  <input data-el-id="search-input" id="preview-search-input" type="text" placeholder="请输入搜索关键词" class="w-full bg-surface-container border-none rounded-md pl-8 pr-3 py-1.5 text-xs text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors" readonly />
                 </div>
               </div>
               <!-- 组件表格模拟 -->
-              <div class="px-4 py-3">
-                <div class="flex items-center justify-between py-2 border-b border-outline-variant/10">
-                  <div class="flex items-center gap-2">
-                    <div class="w-6 h-6 rounded-full bg-surface-container"></div>
-                    <div>
-                      <p class="text-xs font-medium text-on-surface" id="preview-row-name">张三</p>
-                      <p class="text-[10px] text-on-surface-variant/60">zhangsan@example.com</p>
+              <div class="px-4 py-3" data-el-id="table-body" data-el-tag="div.table">
+                <div class="flex items-center justify-between py-2 border-b border-outline-variant/10" data-el-id="table-row-1" data-el-tag="div.row">
+                  <div class="flex items-center gap-2" data-el-id="table-row-1-left">
+                    <div class="w-6 h-6 rounded-full bg-surface-container" data-el-id="avatar-1"></div>
+                    <div data-el-id="name-col-1">
+                      <p class="text-xs font-medium text-on-surface" data-el-id="preview-row-name" id="preview-row-name">张三</p>
+                      <p class="text-[10px] text-on-surface-variant/60" data-el-id="email-1">zhangsan@example.com</p>
                     </div>
                   </div>
-                  <span class="text-[11px] text-on-surface-variant/50">2024-01-15</span>
+                  <span class="text-[11px] text-on-surface-variant/50" data-el-id="date-1">2024-01-15</span>
                 </div>
-                <div class="flex items-center justify-between py-2 border-b border-outline-variant/10">
-                  <div class="flex items-center gap-2">
-                    <div class="w-6 h-6 rounded-full bg-surface-container"></div>
-                    <div>
-                      <p class="text-xs font-medium text-on-surface" id="preview-row-name-2">李四</p>
-                      <p class="text-[10px] text-on-surface-variant/60">lisi@example.com</p>
+                <div class="flex items-center justify-between py-2 border-b border-outline-variant/10" data-el-id="table-row-2" data-el-tag="div.row">
+                  <div class="flex items-center gap-2" data-el-id="table-row-2-left">
+                    <div class="w-6 h-6 rounded-full bg-surface-container" data-el-id="avatar-2"></div>
+                    <div data-el-id="name-col-2">
+                      <p class="text-xs font-medium text-on-surface" data-el-id="preview-row-name-2" id="preview-row-name-2">李四</p>
+                      <p class="text-[10px] text-on-surface-variant/60" data-el-id="email-2">lisi@example.com</p>
                     </div>
                   </div>
-                  <span class="text-[11px] text-on-surface-variant/50">2024-02-20</span>
+                  <span class="text-[11px] text-on-surface-variant/50" data-el-id="date-2">2024-02-20</span>
                 </div>
-                <div class="flex items-center justify-between py-2">
-                  <div class="flex items-center gap-2">
-                    <div class="w-6 h-6 rounded-full bg-surface-container"></div>
-                    <div>
-                      <p class="text-xs font-medium text-on-surface" id="preview-row-name-3">王五</p>
-                      <p class="text-[10px] text-on-surface-variant/60">wangwu@example.com</p>
+                <div class="flex items-center justify-between py-2" data-el-id="table-row-3" data-el-tag="div.row">
+                  <div class="flex items-center gap-2" data-el-id="table-row-3-left">
+                    <div class="w-6 h-6 rounded-full bg-surface-container" data-el-id="avatar-3"></div>
+                    <div data-el-id="name-col-3">
+                      <p class="text-xs font-medium text-on-surface" data-el-id="preview-row-name-3" id="preview-row-name-3">王五</p>
+                      <p class="text-[10px] text-on-surface-variant/60" data-el-id="email-3">wangwu@example.com</p>
                     </div>
                   </div>
-                  <span class="text-[11px] text-on-surface-variant/50">2024-03-10</span>
+                  <span class="text-[11px] text-on-surface-variant/50" data-el-id="date-3">2024-03-10</span>
                 </div>
               </div>
               <!-- 组件按钮区域 -->
-              <div class="px-4 py-3 border-t border-outline-variant/10 flex items-center justify-end gap-2" id="preview-footer">
-                <button class="px-3 py-1.5 rounded-md text-xs font-medium bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" id="preview-btn-cancel">取消</button>
-                <button class="px-3 py-1.5 rounded-md text-xs font-medium bg-primary text-on-primary hover:opacity-90 transition-all" id="preview-btn-submit">提交</button>
+              <div class="px-4 py-3 border-t border-outline-variant/10 flex items-center justify-end gap-2" data-el-id="footer" data-el-tag="div.footer" id="preview-footer">
+                <button class="px-3 py-1.5 rounded-md text-xs font-medium bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" data-el-id="btn-cancel" id="preview-btn-cancel">取消</button>
+                <button class="px-3 py-1.5 rounded-md text-xs font-medium bg-primary text-on-primary hover:opacity-90 transition-all" data-el-id="btn-submit" id="preview-btn-submit">提交</button>
               </div>
             </div>
           </div>
@@ -650,7 +740,7 @@
       });
 
       // =============================================
-      // 2. 主 Tab 切换：文本多语言 | 颜色调整 | 字典预览
+      // 2. 主 Tab 切换：文本多语言 | 颜色调整 | 事件绑定 | 字典预览
       // =============================================
       $('#editor-tabs').on('click', '.editor-tab-btn', function() {
         var tabId = $(this).data('tab');
@@ -662,6 +752,11 @@
         // 切换面板显示
         $('.editor-panel').addClass('hidden');
         $('#' + tabId).removeClass('hidden');
+
+        // 如果切换到事件绑定 Tab，退出选取模式
+        if (tabId !== 'panel-events') {
+          if (pickerActive) deactivatePicker();
+        }
       });
 
       // =============================================
@@ -794,6 +889,272 @@
         var val = $(this).val();
         row.data(lang, val);
         row.attr('data-' + lang, val);
+      });
+
+      // =============================================
+      // 5b. AI 一键翻译按钮（占位待对接）
+      // =============================================
+      $('#btn-ai-translate').on('click', function() {
+        // AI 一键翻译功能 - 待对接：
+        // 1. 收集当前组件所有文本 key 和各语言已有翻译
+        // 2. 调用后端 AI 翻译接口（如 DeepSeek / 豆包 API）
+        // 3. 接口返回后，自动填充所有空白翻译输入框
+        // 4. 更新 data 属性和字典预览
+        // 5. 给出翻译完成提示
+        alert('AI 一键翻译功能待对接，对接后将会自动翻译所有未填写的语言条目。');
+      });
+
+      // =============================================
+      // 5c. 事件绑定系统
+      // =============================================
+      var bindingIdCounter = 0;
+      var pickerActive = false;
+      var selectedElId = null;
+      var bindings = []; // { id, elId, elTag, eventType, eventbusName }
+
+      // 更新绑定清单 UI
+      function renderBindingList() {
+        var $list = $('#binding-list');
+        var $count = $('#binding-count');
+        if (bindings.length === 0) {
+          $list.html('<div class="text-xs text-on-surface-variant/50 text-center py-4">暂无绑定，请切换到「事件绑定」Tab 添加</div>');
+          $count.text('0 项');
+          return;
+        }
+        var html = '';
+        for (var i = 0; i < bindings.length; i++) {
+          var b = bindings[i];
+          var eventLabel = b.eventType === 'click' ? '点击' : '双击';
+          html += '' +
+            '<div class="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-surface-container transition-colors group binding-item cursor-default" data-binding-id="' + b.id + '" data-el-id="' + b.elId + '">' +
+              '<span class="inline-block w-1.5 h-1.5 rounded-full bg-primary/60 shrink-0"></span>' +
+              '<span class="text-xs font-mono text-on-surface truncate flex-1" title="' + b.elTag + '">' + b.elTag + '</span>' +
+              '<span class="text-[10px] text-on-surface-variant/50 shrink-0">' + eventLabel + '</span>' +
+              '<button class="p-0.5 rounded opacity-0 group-hover:opacity-100 text-on-surface-variant/50 hover:text-error transition-all btn-del-binding" data-binding-id="' + b.id + '" title="删除绑定">' +
+                '<i data-lucide="x" class="w-3 h-3"></i>' +
+              '</button>' +
+            '</div>';
+        }
+        $list.html(html);
+        $count.text(bindings.length + ' 项');
+        lucide.createIcons();
+      }
+
+      // 从预览区查找元素
+      function findPreviewEl(elId) {
+        return $('#preview-component').find('[data-el-id="' + elId + '"]');
+      }
+
+      // 清除所有高亮
+      function clearPreviewHighlights() {
+        $('#preview-component').find('[data-el-id]').css({
+          'outline': '',
+          'outline-offset': ''
+        });
+      }
+
+      // 高亮指定元素
+      function highlightPreviewEl(elId, color) {
+        clearPreviewHighlights();
+        if (!elId) return;
+        var $el = findPreviewEl(elId);
+        if ($el.length) {
+          $el.css({
+            'outline': '2px solid ' + color,
+            'outline-offset': '1px'
+          });
+        }
+      }
+
+      // 激活选取模式
+      function activatePicker() {
+        pickerActive = true;
+        selectedElId = null;
+        $('#btn-toggle-picker').removeClass('bg-surface-container text-on-surface-variant hover:bg-surface-container-high').addClass('bg-primary/20 text-primary');
+        $('#picker-status').text('🟡 选取模式已激活 — 鼠标悬停预览区元素显示黄色边框，点击选中');
+        $('#picker-action-area').addClass('hidden');
+        $('#btn-confirm-binding').prop('disabled', true);
+        $('#btn-cancel-binding').prop('disabled', true);
+        $('#btn-reselect-binding').prop('disabled', true);
+        $('#preview-component').addClass('cursor-crosshair');
+      }
+
+      // 退出选取模式
+      function deactivatePicker() {
+        pickerActive = false;
+        selectedElId = null;
+        $('#btn-toggle-picker').removeClass('bg-primary/20 text-primary').addClass('bg-surface-container text-on-surface-variant hover:bg-surface-container-high');
+        $('#picker-status').text('点击右侧预览区中的元素进行绑定');
+        $('#picker-action-area').addClass('hidden');
+        $('#btn-confirm-binding').prop('disabled', true);
+        $('#btn-cancel-binding').prop('disabled', true);
+        $('#btn-reselect-binding').prop('disabled', true);
+        $('#preview-component').removeClass('cursor-crosshair');
+        clearPreviewHighlights();
+      }
+
+      // 切换选取模式
+      $('#btn-toggle-picker').on('click', function() {
+        if (pickerActive) {
+          deactivatePicker();
+        } else {
+          activatePicker();
+        }
+      });
+
+      // 预览区元素 hover（选取模式下显示黄色边框）
+      $('#preview-component').on('mouseenter', '[data-el-id]', function() {
+        if (!pickerActive) return;
+        var elId = $(this).data('el-id');
+        if (elId === selectedElId) return;
+        // 黄色高亮 hover
+        $(this).css({
+          'outline': '2px solid #F59E0B',
+          'outline-offset': '1px'
+        });
+      }).on('mouseleave', '[data-el-id]', function() {
+        if (!pickerActive) return;
+        var elId = $(this).data('el-id');
+        if (elId === selectedElId) return;
+        $(this).css({ 'outline': '', 'outline-offset': '' });
+      });
+
+      // 预览区元素点击（选取模式下选中）
+      $('#preview-component').on('click', '[data-el-id]', function(e) {
+        if (!pickerActive) return;
+        e.stopPropagation();
+
+        var elId = $(this).data('el-id');
+        var elTag = $(this).data('el-tag') || $(this).prop('tagName').toLowerCase() + '#' + elId;
+        selectedElId = elId;
+
+        // 蓝色高亮选中
+        clearPreviewHighlights();
+        $(this).css({
+          'outline': '2px solid #2F6BFF',
+          'outline-offset': '2px'
+        });
+
+        // 更新选取信息
+        $('#selected-element-info').text(elTag);
+        var eventType = $('#event-type-select').val();
+        var eventLabel = eventType === 'click' ? '点击 (click)' : '双击 (dblclick)';
+        $('#selected-event-type-label').text(eventLabel);
+        $('#selected-eventbus-label').text($('#eventbus-name').val() || '$emit');
+
+        // 显示操作区
+        $('#picker-action-area').removeClass('hidden');
+        $('#btn-confirm-binding').prop('disabled', false);
+        $('#btn-cancel-binding').prop('disabled', false);
+        $('#btn-reselect-binding').prop('disabled', false);
+
+        // 更新状态文字
+        $('#picker-status').text('🔵 已选中元素：' + elTag + '，请确认或重选');
+      });
+
+      // 确认绑定
+      $('#btn-confirm-binding').on('click', function() {
+        if (!selectedElId) return;
+
+        var eventType = $('#event-type-select').val();
+        var eventbusName = $('#eventbus-name').val() || '$emit';
+        var $el = findPreviewEl(selectedElId);
+        var elTag = $el.data('el-tag') || $el.prop('tagName').toLowerCase() + '#' + selectedElId;
+
+        bindingIdCounter++;
+        var binding = {
+          id: bindingIdCounter,
+          elId: selectedElId,
+          elTag: elTag,
+          eventType: eventType,
+          eventbusName: eventbusName
+        };
+        bindings.push(binding);
+        renderBindingList();
+
+        // 给预览元素添加绑定标记 data 属性
+        $el.attr('data-has-binding', 'true');
+        $el.attr('data-binding-id', bindingIdCounter);
+
+        // 退出选取模式
+        deactivatePicker();
+        $('#picker-status').text('✅ 已绑定：' + elTag + ' → ' + eventbusName + '(' + eventType + ')');
+        setTimeout(function() {
+          $('#picker-status').text('点击右侧预览区中的元素进行绑定');
+        }, 3000);
+      });
+
+      // 取消绑定选取
+      $('#btn-cancel-binding').on('click', function() {
+        deactivatePicker();
+        $('#picker-status').text('已取消选取');
+        setTimeout(function() {
+          $('#picker-status').text('点击右侧预览区中的元素进行绑定');
+        }, 2000);
+      });
+
+      // 重选
+      $('#btn-reselect-binding').on('click', function() {
+        selectedElId = null;
+        clearPreviewHighlights();
+        $('#picker-action-area').addClass('hidden');
+        $('#btn-confirm-binding').prop('disabled', true);
+        $('#btn-cancel-binding').prop('disabled', true);
+        $('#btn-reselect-binding').prop('disabled', true);
+        $('#picker-status').text('🟡 已清除选区，请重新选择右侧预览区中的元素');
+        // 保持选取模式激活
+      });
+
+      // 删除绑定项
+      $('#binding-list').on('click', '.btn-del-binding', function(e) {
+        e.stopPropagation();
+        var bId = $(this).data('binding-id');
+        if (!confirm('确定删除此事件绑定吗？')) return;
+
+        // 从数组中移除
+        for (var i = 0; i < bindings.length; i++) {
+          if (bindings[i].id === bId) {
+            // 移除预览元素上的绑定标记
+            var $el = findPreviewEl(bindings[i].elId);
+            $el.removeAttr('data-has-binding');
+            $el.removeAttr('data-binding-id');
+            bindings.splice(i, 1);
+            break;
+          }
+        }
+        renderBindingList();
+      });
+
+      // 绑定清单 hover → 预览区高亮
+      $('#binding-list').on('mouseenter', '.binding-item', function() {
+        var elId = $(this).data('el-id');
+        highlightPreviewEl(elId, '#2F6BFF');
+      }).on('mouseleave', '.binding-item', function() {
+        clearPreviewHighlights();
+      });
+
+      // EventBus 名称变更时更新预览标签
+      $('#eventbus-name, #event-type-select').on('change', function() {
+        if (selectedElId) {
+          var eventType = $('#event-type-select').val();
+          var eventLabel = eventType === 'click' ? '点击 (click)' : '双击 (dblclick)';
+          $('#selected-event-type-label').text(eventLabel);
+          $('#selected-eventbus-label').text($('#eventbus-name').val() || '$emit');
+        }
+      });
+
+      // 清空所有绑定
+      $('#btn-clear-bindings').on('click', function() {
+        if (bindings.length === 0) return;
+        if (!confirm('确定要清空所有事件绑定吗？')) return;
+        // 移除所有预览元素的绑定标记
+        for (var i = 0; i < bindings.length; i++) {
+          var $el = findPreviewEl(bindings[i].elId);
+          $el.removeAttr('data-has-binding');
+          $el.removeAttr('data-binding-id');
+        }
+        bindings = [];
+        renderBindingList();
       });
 
       // =============================================
