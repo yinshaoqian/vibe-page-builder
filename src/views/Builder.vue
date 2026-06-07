@@ -1,188 +1,402 @@
 <template>
-  <div class="flex-1 flex overflow-hidden">
-    <!-- 左侧组件面板 -->
-    <aside class="w-64 bg-surface-card border-r border-border flex flex-col shrink-0">
-      <!-- 组件 Tab 切换 -->
-      <div class="flex border-b border-border shrink-0">
-        <button v-for="t in panelTabs" :key="t.key"
-          class="flex-1 px-3 py-2.5 text-xs font-medium text-center transition-colors border-b-2"
-          :class="activePanelTab === t.key
-            ? 'text-brand border-brand bg-blue-50/30'
-            : 'text-text-secondary border-transparent hover:text-text-primary hover:bg-surface-bg'"
-          @click="activePanelTab = t.key">
-          {{ t.label }}
-        </button>
+  <div class="flex-1 flex overflow-hidden bg-[#F6F8FB]">
+    <!-- ===== 左侧面板 ===== -->
+    <aside class="w-64 bg-white border-r border-[#E6EAF2] flex flex-col shrink-0 shadow-sm z-10">
+      <!-- 头部 -->
+      <div class="border-b border-[#E6EAF2] px-4 py-3 shrink-0">
+        <div class="flex items-center justify-between">
+          <h2 class="text-sm font-semibold text-[#152033]">组件面板</h2>
+          <button @click="handleImport" class="p-1.5 rounded hover:bg-[#F6F8FB] text-[#637089] transition-colors" title="导入组件">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V4"/></svg>
+          </button>
+        </div>
       </div>
 
-      <!-- 基础组件 Tab -->
-      <div v-if="activePanelTab === 'basic'" class="flex-1 overflow-y-auto p-2 space-y-1">
-        <div v-for="cat in componentCategories" :key="cat.label">
-          <button class="w-full flex items-center justify-between px-2.5 py-1.5 text-xs font-medium text-text-secondary hover:text-text-primary rounded-md hover:bg-surface-bg transition-colors"
-            @click="cat.expanded = !cat.expanded">
-            <span>{{ cat.label }}</span>
-            <svg class="w-3.5 h-3.5 transition-transform" :class="cat.expanded ? 'rotate-90' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+      <div class="flex-1 overflow-y-auto">
+        <!-- 布局容器（小型占位） -->
+        <div class="px-3 pt-3 pb-1">
+          <button class="flex items-center gap-1.5 text-xs font-medium text-[#637089] hover:text-[#152033] transition-colors" @click="layoutExpanded = !layoutExpanded">
+            <svg class="w-3 h-3 transition-transform" :class="layoutExpanded ? 'rotate-90' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+            布局容器
           </button>
-          <div v-if="cat.expanded" class="ml-2 mt-0.5 space-y-0.5">
-            <div v-for="cmp in cat.components" :key="cmp.name" draggable="true"
-              class="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-sm text-text-secondary hover:text-text-primary hover:bg-surface-bg cursor-grab active:cursor-grabbing transition-colors">
-              <span v-html="cmp.icon" class="w-4 h-4 shrink-0 flex items-center justify-center text-xs" />
-              <span class="truncate">{{ cmp.name }}</span>
+        </div>
+        <div v-if="layoutExpanded" class="px-3 pb-2">
+          <div class="flex gap-1.5">
+            <div v-for="l in layoutItems" :key="l.name"
+              draggable="true"
+              @dragstart="onDragLayout(l)"
+              class="flex-1 flex flex-col items-center gap-1 py-2 rounded-lg border border-[#E6EAF2] text-[#637089] hover:border-[#2F6BFF]/40 hover:bg-blue-50/20 cursor-grab active:cursor-grabbing transition-all text-xs">
+              <span class="text-base">{{ l.icon }}</span>
+              <span>{{ l.name }}</span>
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- 组件模块 Tab -->
-      <div v-if="activePanelTab === 'modules'" class="flex-1 overflow-y-auto p-2">
-        <button class="w-full flex items-center gap-1.5 px-3 py-2 mb-2 text-sm text-brand border border-brand/30 rounded-lg hover:bg-blue-50 transition-colors">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-          导入组件
-        </button>
-        <div v-for="mod in componentModules" :key="mod.name" draggable="true"
-          class="flex items-center gap-2.5 px-3 py-2.5 mb-1 rounded-lg border border-border hover:border-brand/30 hover:bg-blue-50/30 cursor-grab active:cursor-grabbing transition-all group">
-          <svg class="w-5 h-5 text-brand shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
-          <div class="flex-1 min-w-0">
-            <div class="text-sm font-medium text-text-primary truncate">{{ mod.name }}</div>
-            <div class="text-xs text-text-secondary truncate">{{ mod.desc }}</div>
+        <!-- 分割线 -->
+        <div class="mx-3 my-2 border-t border-[#E6EAF2]"></div>
+
+        <!-- 组件模块列表 -->
+        <div class="px-3 pb-3">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-xs font-medium text-[#637089]">组件模块</span>
+            <span class="text-[10px] text-[#637089]">{{ storeComponentFiles.length }} 个</span>
           </div>
-          <span class="text-xs text-text-secondary bg-surface-bg px-1.5 py-0.5 rounded shrink-0">v{{ mod.version }}</span>
-          <div class="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
-            <button class="p-1 rounded hover:bg-surface-bg text-text-secondary hover:text-text-primary"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg></button>
-            <button class="p-1 rounded hover:bg-red-50 text-text-secondary hover:text-red-500"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>
+
+          <!-- 空状态 -->
+          <div v-if="!storeComponentFiles.length" class="text-center py-10">
+            <svg class="w-10 h-10 mx-auto mb-2 text-[#E6EAF2]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+            <p class="text-xs text-[#637089]">暂无组件模块</p>
+            <p class="text-xs text-[#637089] mt-1">先在「组件模板」中创建</p>
+          </div>
+
+          <!-- 模块列表 -->
+          <div v-for="mod in storeComponentFiles" :key="mod.id"
+            draggable="true"
+            @dragstart="onDragModule(mod)"
+            @click="selectModule(mod)"
+            class="flex items-center gap-3 px-3 py-2.5 rounded-lg border border-[#E6EAF2] hover:border-[#2F6BFF]/40 hover:bg-blue-50/20 cursor-pointer transition-all group mb-1.5"
+            :class="{ 'ring-2 ring-[#2F6BFF] bg-blue-50/30': selectedModuleId === mod.id }">
+            <div class="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-[#2F6BFF] shrink-0">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="text-sm font-medium text-[#152033] truncate">{{ mod.name }}</div>
+              <div class="text-xs text-[#637089] truncate">{{ mod.description }}</div>
+            </div>
+            <span class="text-[10px] text-[#637089] bg-[#F6F8FB] px-1.5 py-0.5 rounded shrink-0">v{{ mod.version }}</span>
+            <button @click.stop="removeModule(mod.id)" class="p-1 rounded hover:bg-red-50 text-[#637089] hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all shrink-0">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
           </div>
         </div>
-      </div>
-
-      <!-- 底部快捷操作 -->
-      <div class="flex items-center justify-around p-2 border-t border-border shrink-0">
-        <button class="flex flex-col items-center gap-0.5 p-1.5 rounded-md hover:bg-surface-bg transition-colors text-text-secondary hover:text-text-primary"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg><span class="text-[10px]">撤销</span></button>
-        <button class="flex flex-col items-center gap-0.5 p-1.5 rounded-md hover:bg-surface-bg transition-colors text-text-secondary hover:text-text-primary"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg><span class="text-[10px]">重做</span></button>
-        <button class="flex flex-col items-center gap-0.5 p-1.5 rounded-md hover:bg-surface-bg transition-colors text-text-secondary hover:text-text-primary"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg><span class="text-[10px]">预览</span></button>
-        <button @click="handleSave" class="flex flex-col items-center gap-0.5 p-1.5 rounded-md hover:bg-blue-50 transition-colors text-brand"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg><span class="text-[10px]">保存</span></button>
       </div>
     </aside>
 
-    <!-- 画布编辑器 -->
+    <!-- ===== 画布 ===== -->
     <div class="flex-1 flex flex-col min-w-0">
       <!-- 画布工具栏 -->
-      <div class="h-11 bg-surface-card border-b border-border flex items-center px-4 gap-2 shrink-0">
-        <div class="flex items-center gap-1 bg-surface-bg rounded-lg p-0.5 border border-border">
+      <div class="h-12 bg-white border-b border-[#E6EAF2] flex items-center px-4 gap-3 shrink-0">
+        <div class="flex items-center gap-1 bg-[#F6F8FB] rounded-lg p-0.5 border border-[#E6EAF2]">
           <button v-for="d in devices" :key="d.key"
-            class="px-2.5 py-1 text-xs rounded-md transition-colors"
-            :class="activeDevice === d.key ? 'bg-white text-text-primary shadow-sm' : 'text-text-secondary hover:text-text-primary'"
+            class="px-2.5 py-1 text-xs rounded-md transition-colors flex items-center gap-1.5"
+            :class="activeDevice === d.key ? 'bg-white text-[#152033] shadow-sm' : 'text-[#637089] hover:text-[#152033]'"
             @click="activeDevice = d.key">
+            <span class="text-xs">{{ d.icon }}</span>
             {{ d.label }}
           </button>
         </div>
-        <div class="flex items-center gap-1 ml-2">
-          <button @click="zoomOut" class="p-1 rounded hover:bg-surface-bg text-text-secondary transition-colors"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/></svg></button>
-          <span class="text-xs text-text-secondary w-10 text-center">{{ zoomLevel }}%</span>
-          <button @click="zoomIn" class="p-1 rounded hover:bg-surface-bg text-text-secondary transition-colors"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg></button>
+        <div class="flex items-center gap-1">
+          <button @click="zoomOut" class="p-1.5 rounded hover:bg-[#F6F8FB] text-[#637089]" title="缩小">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/></svg>
+          </button>
+          <span class="text-xs text-[#637089] w-10 text-center select-none">{{ zoomLevel }}%</span>
+          <button @click="zoomIn" class="p-1.5 rounded hover:bg-[#F6F8FB] text-[#637089]" title="放大">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+          </button>
         </div>
-        <div class="ml-auto flex items-center gap-2">
-          <button @click="handleSave" class="flex items-center gap-1.5 px-3 py-1.5 text-sm text-white bg-brand rounded-lg hover:bg-blue-600 transition-colors">
+        <div class="flex items-center gap-2 ml-auto">
+          <span v-if="canvasItems.length" class="text-xs text-[#637089]">{{ canvasItems.length }} 个组件</span>
+          <button @click="handleSave" class="flex items-center gap-1.5 px-4 py-1.5 text-sm text-white bg-[#2F6BFF] rounded-lg hover:bg-blue-600 transition-colors shadow-sm">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
             保存
           </button>
         </div>
       </div>
 
-      <!-- 画布 -->
-      <div class="flex-1 overflow-auto bg-surface-bg p-6 flex items-start justify-center">
-        <div class="bg-white rounded-xl shadow-sm border border-border transition-all overflow-hidden"
+      <!-- 画布主体 -->
+      <div class="flex-1 overflow-auto p-6 flex items-start justify-center"
+        @dragover.prevent="onDragOver"
+        @dragleave="onDragLeave"
+        @drop="onDrop">
+        <div class="bg-white rounded-xl shadow-sm border border-[#E6EAF2] transition-all overflow-hidden"
           :style="{ width: canvasWidth, transform: `scale(${zoomLevel / 100})`, transformOrigin: 'top center' }">
-          <!-- Canvas 内容 -->
-          <div class="p-6 space-y-4 min-h-[400px]">
-            <div class="border-2 border-dashed border-gray-200 rounded-lg p-4 text-center text-sm text-text-secondary hover:border-brand/50 transition-colors cursor-pointer">
-              <svg class="w-8 h-8 mx-auto mb-2 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-              拖拽组件到此处
+          <div class="min-h-[500px] relative">
+            <!-- 空状态 -->
+            <div v-if="!canvasItems.length"
+              class="flex flex-col items-center justify-center py-24 text-center select-none"
+              :class="dragOver ? 'bg-blue-50/40' : ''">
+              <svg class="w-14 h-14 mb-3 text-[#E6EAF2]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4v16m8-8H4"/></svg>
+              <p class="text-sm text-[#637089]">拖拽组件模块到此处</p>
+              <p class="text-xs text-[#637089] mt-1">或点击左侧模块预览后添加</p>
             </div>
-            <div v-for="(placed, i) in placedComponents" :key="i"
-              class="relative group rounded-lg border border-border p-4 hover:border-brand/50 hover:shadow-sm transition-all cursor-pointer"
-              :class="{ 'ring-2 ring-brand': selectedIndex === i }"
-              @click="selectedIndex = i">
-              <div class="flex items-center justify-between">
-                <span class="text-sm font-medium text-text-primary">{{ placed.name }}</span>
-                <button @click.stop="removePlaced(i)" class="p-1 rounded hover:bg-red-50 text-text-secondary hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all">
-                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                </button>
+
+            <!-- 放置区域 -->
+            <div v-if="canvasItems.length" class="p-5 space-y-3">
+              <div v-for="(item, i) in canvasItems" :key="item.instanceId"
+                class="relative group rounded-xl border transition-all cursor-pointer"
+                :class="selectedIndex === i
+                  ? 'border-[#2F6BFF] ring-2 ring-[#2F6BFF]/20 shadow-md'
+                  : 'border-[#E6EAF2] hover:border-[#2F6BFF]/40 hover:shadow-sm'"
+                @click="selectItem(i)">
+                <!-- 组件 Header -->
+                <div class="flex items-center justify-between px-4 py-2 bg-[#F6F8FB] border-b border-[#E6EAF2] rounded-t-xl">
+                  <div class="flex items-center gap-2">
+                    <span v-if="item.type === 'layout'" class="text-base">{{ getLayoutIcon(item.name) }}</span>
+                    <svg v-else class="w-4 h-4 text-[#2F6BFF]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+                    <span class="text-sm font-medium text-[#152033]">{{ item.name }}</span>
+                    <span class="text-[10px] px-1.5 py-0.5 rounded"
+                      :class="item.type === 'layout' ? 'bg-amber-50 text-amber-600' : 'bg-blue-50 text-[#2F6BFF]'">
+                      {{ item.type === 'layout' ? '容器' : '模块' }}
+                    </span>
+                  </div>
+                  <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                    <button v-if="i > 0" @click.stop="moveItem(i, -1)" class="p-1 rounded hover:bg-white text-[#637089] hover:text-[#152033]" title="上移">
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/></svg>
+                    </button>
+                    <button v-if="i < canvasItems.length - 1" @click.stop="moveItem(i, 1)" class="p-1 rounded hover:bg-white text-[#637089] hover:text-[#152033]" title="下移">
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </button>
+                    <button @click.stop="removeItem(i)" class="p-1 rounded hover:bg-red-50 text-[#637089] hover:text-red-500" title="移除">
+                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                    </button>
+                  </div>
+                </div>
+                <!-- 预览区 -->
+                <div class="p-4">
+                  <div v-if="item.type === 'layout'" class="flex items-center justify-center py-6 text-[#637089]">
+                    <div class="text-center">
+                      <span class="text-3xl mb-1 block">{{ getLayoutIcon(item.name) }}</span>
+                      <span class="text-xs">{{ item.name }}</span>
+                      <p class="text-[10px] text-[#637089] mt-1">布局容器 — 可嵌套组件</p>
+                    </div>
+                  </div>
+                  <div v-else-if="item.type === 'module'">
+                    <div class="min-h-[60px] rounded-lg overflow-hidden border border-[#E6EAF2]">
+                      <ModulePreviewOnCanvas :component-id="item.componentId" />
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div class="text-xs text-text-secondary mt-1">点击选中编辑属性</div>
             </div>
           </div>
         </div>
       </div>
     </div>
+
+    <!-- ===== 右侧预览面板 ===== -->
+    <aside v-if="rightPanelVisible" class="w-80 bg-white border-l border-[#E6EAF2] flex flex-col shrink-0 shadow-sm z-10">
+      <div class="h-12 border-b border-[#E6EAF2] flex items-center justify-between px-4 shrink-0">
+        <span class="text-sm font-medium text-[#152033]">{{ rightPanelTitle }}</span>
+        <button @click="rightPanelVisible = false" class="p-1 rounded hover:bg-[#F6F8FB] text-[#637089]">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div class="flex-1 overflow-y-auto p-4">
+        <!-- 模块预览 -->
+        <div v-if="rightPanelMode === 'preview' && previewingModule">
+          <div class="mb-4">
+            <h3 class="text-sm font-medium text-[#152033]">{{ previewingModule.name }}</h3>
+            <p class="text-xs text-[#637089] mt-0.5">{{ previewingModule.description }}</p>
+            <div class="flex items-center gap-2 mt-2">
+              <span class="text-[10px] px-1.5 py-0.5 rounded bg-blue-50 text-[#2F6BFF]">v{{ previewingModule.version }}</span>
+              <span class="text-[10px] text-[#637089]">更新于 {{ previewingModule.updatedAt?.slice(0, 10) }}</span>
+            </div>
+          </div>
+          <div class="bg-[#F6F8FB] rounded-xl border border-[#E6EAF2] overflow-hidden p-3 mb-4">
+            <SandboxPreviewPanel>
+              <template #mock-preview>
+                <div class="py-6 text-center text-xs text-[#637089]">沙箱渲染中…</div>
+              </template>
+            </SandboxPreviewPanel>
+          </div>
+          <button @click="addModuleToCanvas(previewingModule)"
+            class="w-full flex items-center justify-center gap-1.5 px-3 py-2 text-sm text-white bg-[#2F6BFF] rounded-lg hover:bg-blue-600 transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            添加此组件到画布
+          </button>
+        </div>
+
+        <!-- 画布选中项信息 -->
+        <div v-if="rightPanelMode === 'canvas-info' && selectedIndex !== null">
+          <div class="bg-[#F6F8FB] rounded-lg p-3 mb-4 text-xs">
+            <div class="flex items-center gap-2 mb-2">
+              <span class="font-medium text-[#152033]">名称</span>
+              <span>{{ selectedItem?.name }}</span>
+            </div>
+            <div class="flex items-center gap-2 mb-2">
+              <span class="font-medium text-[#152033]">类型</span>
+              <span class="px-1.5 py-0.5 rounded text-[10px]"
+                :class="selectedItem?.type === 'layout' ? 'bg-amber-50 text-amber-600' : 'bg-blue-50 text-[#2F6BFF]'">
+                {{ selectedItem?.type === 'layout' ? '布局容器' : '组件模块' }}
+              </span>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="font-medium text-[#152033]">位置</span>
+              <span>第 {{ (selectedIndex ?? 0) + 1 }} / {{ canvasItems.length }} 个</span>
+            </div>
+          </div>
+
+          <!-- 模块预览 -->
+          <div v-if="selectedItem?.type === 'module' && selectedModuleData">
+            <h4 class="text-xs font-medium text-[#152033] mb-2">组件预览</h4>
+            <div class="bg-[#F6F8FB] rounded-xl border border-[#E6EAF2] overflow-hidden p-2 mb-4">
+              <SandboxPreviewPanel>
+                <template #mock-preview>
+                  <div class="py-4 text-center text-xs text-[#637089]">沙箱渲染中…</div>
+                </template>
+              </SandboxPreviewPanel>
+            </div>
+          </div>
+
+          <button @click="removeItem(selectedIndex!)" class="w-full flex items-center justify-center gap-1.5 px-3 py-2 text-sm text-red-500 border border-red-200 rounded-lg hover:bg-red-50 transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+            从画布移除
+          </button>
+        </div>
+      </div>
+    </aside>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { sendToPlatform } from '../composables/usePostMessage'
+import { useComponentStore } from '../composables/useComponentStore'
+import type { StoredComponent, CanvasItem } from '../types'
+import SandboxPreviewPanel from '../components/SandboxPreviewPanel.vue'
+import ModulePreviewOnCanvas from '../components/ModulePreviewOnCanvas.vue'
 
-// 组件面板 Tab
-const activePanelTab = ref('basic')
-const panelTabs = [
-  { key: 'basic', label: '基础组件' },
-  { key: 'modules', label: '组件模块' },
+// ===== 共享存储 =====
+const {
+  componentFiles: storeComponentFiles,
+  getComponent,
+  removeComponent: removeStoreComponent,
+} = useComponentStore()
+
+// ===== 布局容器 =====
+const layoutExpanded = ref(true)
+const layoutItems = [
+  { name: '栅格容器', icon: '▦' },
+  { name: '弹性容器', icon: '▢' },
+  { name: '卡片容器', icon: '▣' },
 ]
 
-// 基础组件分类
-interface ComponentItem { name: string; icon: string }
-interface Category { label: string; expanded: boolean; components: ComponentItem[] }
+function getLayoutIcon(name: string): string {
+  const map: Record<string, string> = { '栅格容器': '▦', '弹性容器': '▢', '卡片容器': '▣' }
+  return map[name] || '□'
+}
 
-const componentCategories = ref<Category[]>([
-  {
-    label: '布局组件', expanded: true,
-    components: [
-      { name: '栅格容器', icon: '▦' },
-      { name: '弹性容器', icon: '▢' },
-      { name: '卡片容器', icon: '▣' },
-    ],
-  },
-  {
-    label: '基础组件', expanded: true,
-    components: [
-      { name: '按钮', icon: '⚡' },
-      { name: '文本', icon: 'T' },
-      { name: '图片', icon: '🖼' },
-      { name: '图标', icon: '◆' },
-    ],
-  },
-  {
-    label: '表单组件', expanded: false,
-    components: [
-      { name: '输入框', icon: '⌨' },
-      { name: '选择器', icon: '▼' },
-      { name: '开关', icon: '⬡' },
-      { name: '日期选择', icon: '📅' },
-    ],
-  },
-  {
-    label: '数据组件', expanded: false,
-    components: [
-      { name: '表格', icon: '⊞' },
-      { name: '列表', icon: '☰' },
-      { name: '图表', icon: '📊' },
-    ],
-  },
-])
+// ===== 拖拽 =====
+let dragPayload: { type: 'layout' | 'module'; name: string; componentId?: string } | null = null
 
-// 组件模块
-const componentModules = [
-  { name: 'UserTable.vue', desc: '用户数据表格组件', version: '1.2' },
-  { name: 'NavBar.vue', desc: '顶部导航栏组件', version: '2.0' },
-  { name: 'DataChart.vue', desc: '数据统计图表组件', version: '1.5' },
-  { name: 'LoginForm.vue', desc: '登录表单组件', version: '1.0' },
-  { name: 'SidePanel.vue', desc: '侧边面板组件', version: '1.3' },
-]
+function onDragLayout(l: { name: string }) {
+  dragPayload = { type: 'layout', name: l.name }
+}
 
-// 画布
+function onDragModule(mod: StoredComponent) {
+  dragPayload = { type: 'module', name: mod.name, componentId: mod.id }
+}
+
+// ===== 画布 =====
+const dragOver = ref(false)
+const canvasItems = ref<CanvasItem[]>([])
+let idCounter = 0
+
+function onDragOver(_e: DragEvent) { dragOver.value = true }
+function onDragLeave() { dragOver.value = false }
+
+function onDrop(_e: DragEvent) {
+  dragOver.value = false
+  if (!dragPayload) return
+  idCounter++
+  const item: CanvasItem = {
+    instanceId: 'item_' + idCounter + '_' + Date.now().toString(36),
+    componentId: dragPayload.componentId || dragPayload.name,
+    name: dragPayload.name,
+    type: dragPayload.type,
+  }
+  canvasItems.value.push(item)
+  dragPayload = null
+  selectItem(canvasItems.value.length - 1)
+}
+
+// ===== 选中与预览 =====
+const selectedIndex = ref<number | null>(null)
+const previewingModule = ref<StoredComponent | null>(null)
+const selectedModuleId = ref<string | null>(null)
+const rightPanelMode = ref<'preview' | 'canvas-info' | null>(null)
+const rightPanelVisible = ref(false)
+
+const selectedItem = computed(() => {
+  if (selectedIndex.value === null) return null
+  return canvasItems.value[selectedIndex.value] ?? null
+})
+
+const selectedModuleData = computed(() => {
+  if (!selectedItem.value || selectedItem.value.type !== 'module') return null
+  return getComponent(selectedItem.value.componentId)
+})
+
+const rightPanelTitle = computed(() => {
+  if (rightPanelMode.value === 'preview' && previewingModule.value) return previewingModule.value.name
+  if (rightPanelMode.value === 'canvas-info' && selectedItem.value) return selectedItem.value.name
+  return '详情'
+})
+
+function selectModule(mod: StoredComponent) {
+  selectedModuleId.value = mod.id
+  previewingModule.value = mod
+  rightPanelMode.value = 'preview'
+  rightPanelVisible.value = true
+  selectedIndex.value = null
+}
+
+function selectItem(idx: number) {
+  selectedIndex.value = idx
+  previewingModule.value = null
+  selectedModuleId.value = null
+  rightPanelMode.value = 'canvas-info'
+  rightPanelVisible.value = true
+}
+
+function addModuleToCanvas(mod: StoredComponent) {
+  idCounter++
+  canvasItems.value.push({
+    instanceId: 'item_' + idCounter + '_' + Date.now().toString(36),
+    componentId: mod.id,
+    name: mod.name,
+    type: 'module',
+  })
+  selectItem(canvasItems.value.length - 1)
+}
+
+// ===== 画布操作 =====
+function removeItem(idx: number) {
+  canvasItems.value.splice(idx, 1)
+  if (selectedIndex.value === idx) {
+    selectedIndex.value = canvasItems.value.length > 0
+      ? Math.min(idx, canvasItems.value.length - 1)
+      : null
+    if (!canvasItems.value.length) rightPanelVisible.value = false
+  } else if (selectedIndex.value !== null && selectedIndex.value > idx) {
+    selectedIndex.value--
+  }
+}
+
+function moveItem(idx: number, dir: -1 | 1) {
+  const t = idx + dir
+  if (t < 0 || t >= canvasItems.value.length) return
+  const tmp = canvasItems.value[idx]
+  canvasItems.value[idx] = canvasItems.value[t]
+  canvasItems.value[t] = tmp
+  selectedIndex.value = t
+}
+
+function removeModule(id: string) {
+  if (!confirm('删除组件 "' + (getComponent(id)?.name || id) + '" ？')) return
+  removeStoreComponent(id)
+  if (previewingModule.value?.id === id) {
+    previewingModule.value = null
+    rightPanelVisible.value = false
+  }
+}
+
+// ===== 设备 & 缩放 =====
 const activeDevice = ref('desktop')
 const devices = [
-  { key: 'mobile', label: '手机' },
-  { key: 'tablet', label: '平板' },
-  { key: 'desktop', label: '桌面' },
+  { key: 'mobile', label: '手机', icon: '📱' },
+  { key: 'tablet', label: '平板', icon: '📟' },
+  { key: 'desktop', label: '桌面', icon: '🖥' },
 ]
 
 const canvasWidth = computed(() => {
@@ -197,19 +411,16 @@ const zoomLevel = ref(100)
 function zoomIn() { if (zoomLevel.value < 200) zoomLevel.value += 10 }
 function zoomOut() { if (zoomLevel.value > 50) zoomLevel.value -= 10 }
 
-const placedComponents = ref<{ name: string }[]>([])
-const selectedIndex = ref<number | null>(null)
-
-function removePlaced(idx: number) {
-  placedComponents.value.splice(idx, 1)
-  if (selectedIndex.value === idx) selectedIndex.value = null
-}
-
+// ===== 保存 & 导入 =====
 function handleSave() {
   sendToPlatform('save-builder-config', {
-    components: placedComponents.value,
+    items: canvasItems.value.map(it => ({ name: it.name, type: it.type, componentId: it.componentId })),
     device: activeDevice.value,
   })
-  alert('配置已保存（postMessage 已发送）')
+  alert('配置已保存')
+}
+
+function handleImport() {
+  alert('导入功能待对接 — 将从主平台读取组件文件')
 }
 </script>

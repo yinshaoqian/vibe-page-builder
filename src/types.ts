@@ -35,7 +35,46 @@ export interface EventBinding {
   eventBusName: string
 }
 
-// 组件模块
+// 颜色变量
+export interface ColorVar {
+  name: string
+  value: string
+}
+
+// 已存储的组件文件（完整数据）
+export interface StoredComponent {
+  id: string
+  name: string
+  description: string
+  version: string
+  updatedAt: string
+  template: string
+  script: string
+  style: string
+  i18nEntries: I18nEntry[]
+  colorVars: ColorVar[]
+  bindings: EventBinding[]
+  eventBusName: string
+}
+
+// 画布上已放置的组件
+export interface PlacedComponent {
+  instanceId: string
+  componentId: string
+  name: string
+  type: 'basic' | 'module'
+  props?: Record<string, any>
+}
+
+// 画布项目（简化版，用于排版搭建器）
+export interface CanvasItem {
+  instanceId: string
+  componentId: string
+  name: string
+  type: 'layout' | 'module'
+}
+
+// 组件模块（列表展示用）
 export interface ComponentModule {
   name: string
   description: string

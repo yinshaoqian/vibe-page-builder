@@ -6,15 +6,24 @@
       <div class="border-b border-border">
         <div class="px-3 py-2.5 flex items-center justify-between">
           <span class="text-xs font-medium uppercase tracking-wider text-text-secondary">组件文件</span>
+          <div class="flex items-center gap-1">
+            <button @click="createNewFile" class="p-1 rounded hover:bg-surface-bg text-text-secondary hover:text-brand transition-colors" title="新增组件">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+            </button>
+            <button v-if="activeFile" @click="deleteCurrentFile" class="p-1 rounded hover:bg-red-50 text-text-secondary hover:text-red-500 transition-colors" title="删除组件">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+            </button>
+          </div>
         </div>
         <div class="px-2 pb-2 space-y-0.5">
-          <button v-for="f in componentFiles" :key="f.name"
+          <button v-for="f in componentFiles" :key="f.id || f.name"
             class="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-md text-sm transition-colors text-left"
             :class="activeFile === f.name ? 'bg-blue-50 text-brand font-medium' : 'text-text-secondary hover:text-text-primary hover:bg-surface-bg'"
             @click="activeFile = f.name">
             <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
             <span class="truncate">{{ f.name }}</span>
           </button>
+          <div v-if="!componentFiles.length" class="text-xs text-text-secondary text-center py-4">暂无组件，点击 + 新建</div>
         </div>
       </div>
       <!-- 绑定清单 -->
@@ -51,6 +60,10 @@
           {{ t.label }}
         </button>
         <div class="ml-auto flex items-center gap-2">
+          <button @click="saveCurrentToStore" class="flex items-center gap-1.5 px-3 py-1.5 text-sm text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
+            保存
+          </button>
           <button @click="showExportModal = true" class="flex items-center gap-1.5 px-3 py-1.5 text-sm text-white bg-brand rounded-lg hover:bg-blue-600 transition-colors">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
             导出组件
@@ -247,20 +260,49 @@
 
 <script setup lang="ts">
 import { ref, reactive, computed, watch } from 'vue'
-import type { I18nEntry, EventBinding } from '../types'
+import type { I18nEntry, EventBinding, StoredComponent } from '../types'
+import { useComponentStore } from '../composables/useComponentStore'
 import SandboxPreviewPanel from '../components/SandboxPreviewPanel.vue'
 
+// === 共享存储 ===
+const {
+  componentFiles: storeComponentFiles,
+  saveComponent: storeSaveComponent,
+  getComponent: storeGetComponent,
+  removeComponent: storeRemoveComponent,
+} = useComponentStore()
+
 // === 文件列表 ===
-const activeFile = ref('UserTable.vue')
+const activeFile = ref('')
 const sandboxMode = ref(false)
-const componentFiles = [
-  { name: 'UserTable.vue' },
-  { name: 'NavBar.vue' },
-  { name: 'DataChart.vue' },
-  { name: 'LoginForm.vue' },
-  { name: 'SideMenu.vue' },
-  { name: 'FooterBar.vue' },
-]
+
+// 从 store 推导文件列表
+const componentFiles = computed(() => {
+  return storeComponentFiles.value.map(c => ({ name: c.name, id: c.id }))
+})
+
+// 当 activeFile 变化时，从 store 加载数据
+watch(activeFile, (name) => {
+  if (!name) return
+  const data = storeComponentFiles.value.find(c => c.name === name)
+  if (!data) return
+  // 加载 i18n
+  i18nEntries.length = 0
+  for (const entry of data.i18nEntries) {
+    i18nEntries.push({ ...entry })
+  }
+  // 加载颜色
+  colorVars.length = 0
+  for (const cv of data.colorVars) {
+    colorVars.push({ ...cv })
+  }
+  // 加载绑定
+  bindings.length = 0
+  for (const b of data.bindings) {
+    bindings.push({ ...b })
+  }
+  eventBusName.value = data.eventBusName
+})
 
 // === 编辑器 Tab ===
 const editorTabs = [
@@ -526,8 +568,78 @@ function downloadVue() {
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
-  a.download = activeFile.value
+  a.download = (activeFile.value || 'component') + '.vue'
   a.click()
   URL.revokeObjectURL(url)
+}
+
+// === 保存到共享存储 ===
+function saveCurrentToStore() {
+  const name = activeFile.value.trim()
+  if (!name) {
+    const input = prompt('请输入组件名称：')
+    if (!input) return
+    activeFile.value = input
+  }
+
+  const existing = storeComponentFiles.value.find(c => c.name === activeFile.value)
+  const comp: StoredComponent = {
+    id: existing?.id || '',
+    name: activeFile.value,
+    description: existing?.description || '',
+    version: existing?.version || '1.0',
+    updatedAt: new Date().toISOString(),
+    template: '',
+    script: '',
+    style: '',
+    i18nEntries: [...i18nEntries],
+    colorVars: [...colorVars],
+    bindings: [...bindings],
+    eventBusName: eventBusName.value,
+  }
+
+  storeSaveComponent(comp)
+  alert('已保存 "' + comp.name + '" 到组件库')
+}
+
+function createNewFile() {
+  const name = prompt('请输入新组件名称（如 MyPanel.vue）：')
+  if (!name) return
+  // 清空编辑器
+  i18nEntries.length = 0
+  colorVars.length = 0
+  bindings.length = 0
+  // 初始化默认数据
+  activeFile.value = name
+  // 保存空模板到 store
+  const comp: StoredComponent = {
+    id: '',
+    name: name,
+    description: '新建组件',
+    version: '1.0',
+    updatedAt: new Date().toISOString(),
+    template: '',
+    script: '',
+    style: '',
+    i18nEntries: [],
+    colorVars: [
+      { name: 'primary', value: '#2F6BFF' },
+      { name: 'secondary', value: '#16A37B' },
+      { name: 'bg-card', value: '#FFFFFF' },
+      { name: 'text-body', value: '#152033' },
+      { name: 'border-light', value: '#E6EAF2' },
+    ],
+    bindings: [],
+    eventBusName: '$emit',
+  }
+  storeSaveComponent(comp)
+}
+
+function deleteCurrentFile() {
+  if (!activeFile.value) return
+  if (!confirm('删除 "' + activeFile.value + '" ？此操作不可撤销。')) return
+  const existing = storeComponentFiles.value.find(c => c.name === activeFile.value)
+  if (existing?.id) storeRemoveComponent(existing.id)
+  activeFile.value = componentFiles.value[0]?.name || ''
 }
 </script>
