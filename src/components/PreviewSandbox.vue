@@ -39,6 +39,8 @@ const props = defineProps<{
   mockProps?: Record<string, any>
   /** 自定义 mock 翻译映射 */
   mockTranslations?: Record<string, string>
+  /** 组件 CSS 样式字符串 */
+  styles?: string
 }>()
 
 const emit = defineEmits<{
@@ -121,6 +123,14 @@ async function mountComponent() {
     // 清空容器
     sandboxRef.value.innerHTML = ''
 
+    // 注入组件样式（在挂载 Vue 应用之前插入 style 标签）
+    if (props.styles) {
+      const styleEl = document.createElement('style')
+      styleEl.className = '__sandbox_css'
+      styleEl.textContent = props.styles
+      sandboxRef.value.appendChild(styleEl)
+    }
+
     // 为预览创建一个独立的 Vue 应用
     appInstance = createApp(props.componentDef)
 
@@ -147,6 +157,11 @@ function destroyInstance() {
       // 忽略卸载错误
     }
     appInstance = null
+  }
+  // 清理注入的样式
+  if (sandboxRef.value) {
+    const styleEl = sandboxRef.value.querySelector('.__sandbox_css')
+    if (styleEl) styleEl.remove()
   }
 }
 
