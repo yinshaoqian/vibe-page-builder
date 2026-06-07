@@ -51,6 +51,34 @@
     }
   </style>
 
+  <style>
+    /* 语言切换 Tab 按钮样式 */
+    .lang-tab-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.25rem 0.625rem;
+      border-radius: 0.375rem;
+      font-size: 0.75rem;
+      font-weight: 500;
+      color: #637089;
+      background: transparent;
+      transition: all 0.15s ease;
+      cursor: pointer;
+      border: none;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .lang-tab-btn:hover {
+      color: #152033;
+      background: #E6EAF2;
+    }
+    .lang-tab-btn.active {
+      color: #FFFFFF;
+      background: #2F6BFF;
+    }
+  </style>
+
   <!-- 图片兜底 -->
   <script>
     document.addEventListener('error', function (e) {
@@ -184,14 +212,20 @@
 
         <!-- 多语言翻译表 -->
         <div class="bg-surface rounded-lg shadow-card overflow-hidden">
-          <!-- 表头 -->
-          <div class="grid grid-cols-[130px_repeat(5,1fr)_44px] px-4 py-3 bg-surface-container text-xs font-semibold text-on-surface-variant uppercase tracking-wide border-b border-outline-variant/10">
+          <!-- 语言切换 Tab 条（新设计：一次只看一种语言） -->
+          <div class="flex items-center gap-1 px-4 py-2.5 bg-surface-container border-b border-outline-variant/10 overflow-x-auto" id="lang-tab-bar">
+            <span class="text-xs font-semibold text-on-surface-variant mr-1 shrink-0">语言</span>
+            <button class="lang-tab-btn active" data-lang="zh" data-lang-name="中文">zh 中文</button>
+            <button class="lang-tab-btn" data-lang="en" data-lang-name="English">en English</button>
+            <button class="lang-tab-btn" data-lang="vn" data-lang-name="Tiếng Việt">vn Tiếng Việt</button>
+            <button class="lang-tab-btn" data-lang="th" data-lang-name="ไทย">th ไทย</button>
+            <button class="lang-tab-btn" data-lang="ph" data-lang-name="Filipino">ph Filipino</button>
+          </div>
+
+          <!-- 表头（简化为 Key + 翻译） -->
+          <div class="grid grid-cols-[130px_1fr_44px] px-4 py-3 bg-surface-container text-xs font-semibold text-on-surface-variant border-b border-outline-variant/10">
             <span>Key</span>
-            <span>zh (中文)</span>
-            <span>en (English)</span>
-            <span>vn (Tiếng Việt)</span>
-            <span>th (ไทย)</span>
-            <span>ph (Filipino)</span>
+            <span id="i18n-lang-header">zh (中文)</span>
             <span></span>
           </div>
 
@@ -199,79 +233,61 @@
           <div class="divide-y divide-outline-variant/10" id="i18n-table-body">
 
             <!-- 行1：title -->
-            <div class="grid grid-cols-[130px_repeat(5,1fr)_44px] px-4 py-2.5 items-center i18n-row" data-key="title">
+            <div class="grid grid-cols-[130px_1fr_44px] px-4 py-3 items-center i18n-row" data-key="title"
+              data-zh="用户表格" data-en="User Table" data-vn="Bảng Người Dùng" data-th="ตารางผู้ใช้" data-ph="Talaan ng Gumagamit">
               <span class="text-sm font-mono text-on-surface font-medium">title</span>
-              <input type="text" value="用户表格" class="w-full bg-surface-container border-none rounded-md px-2.5 py-1.5 text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors i18n-input" data-lang="zh" />
-              <input type="text" value="User Table" class="w-full bg-surface-container border-none rounded-md px-2.5 py-1.5 text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors i18n-input" data-lang="en" />
-              <input type="text" value="Bảng Người Dùng" class="w-full bg-surface-container border-none rounded-md px-2.5 py-1.5 text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors i18n-input" data-lang="vn" />
-              <input type="text" value="ตารางผู้ใช้" class="w-full bg-surface-container border-none rounded-md px-2.5 py-1.5 text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors i18n-input" data-lang="th" />
-              <input type="text" value="Talaan ng Gumagamit" class="w-full bg-surface-container border-none rounded-md px-2.5 py-1.5 text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors i18n-input" data-lang="ph" />
-              <button class="inline-flex items-center justify-center w-7 h-7 rounded-md text-on-surface-variant/60 hover:text-error hover:bg-error/10 transition-colors btn-delete-row" title="删除此行">
+              <input type="text" value="用户表格" class="w-full bg-surface-container border-none rounded-md px-3 py-2 text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors i18n-input" data-lang="zh" placeholder="输入翻译文本" />
+              <button class="inline-flex items-center justify-center w-7 h-7 rounded-md text-on-surface-variant/60 hover:text-error hover:bg-error/10 transition-colors btn-delete-row shrink-0" title="删除此行">
                 <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
               </button>
             </div>
 
             <!-- 行2：description -->
-            <div class="grid grid-cols-[130px_repeat(5,1fr)_44px] px-4 py-2.5 items-center i18n-row" data-key="description">
+            <div class="grid grid-cols-[130px_1fr_44px] px-4 py-3 items-center i18n-row" data-key="description"
+              data-zh="展示用户信息列表，支持编辑和删除操作" data-en="Display user list with edit and delete support" data-vn="Hiển thị danh sách người dùng với hỗ trợ chỉnh sửa và xóa" data-th="แสดงรายชื่อผู้ใช้พร้อมแก้ไขและลบ" data-ph="Ipakita ang listahan ng user na may suporta sa pag-edit at pagtanggal">
               <span class="text-sm font-mono text-on-surface font-medium">description</span>
-              <input type="text" value="展示用户信息列表，支持编辑和删除操作" class="w-full bg-surface-container border-none rounded-md px-2.5 py-1.5 text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors i18n-input" data-lang="zh" />
-              <input type="text" value="Display user list with edit and delete support" class="w-full bg-surface-container border-none rounded-md px-2.5 py-1.5 text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors i18n-input" data-lang="en" />
-              <input type="text" value="Hiển thị danh sách người dùng với hỗ trợ chỉnh sửa và xóa" class="w-full bg-surface-container border-none rounded-md px-2.5 py-1.5 text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors i18n-input" data-lang="vn" />
-              <input type="text" value="แสดงรายชื่อผู้ใช้พร้อมแก้ไขและลบ" class="w-full bg-surface-container border-none rounded-md px-2.5 py-1.5 text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors i18n-input" data-lang="th" />
-              <input type="text" value="Ipakita ang listahan ng user na may suporta sa pag-edit at pagtanggal" class="w-full bg-surface-container border-none rounded-md px-2.5 py-1.5 text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors i18n-input" data-lang="ph" />
-              <button class="inline-flex items-center justify-center w-7 h-7 rounded-md text-on-surface-variant/60 hover:text-error hover:bg-error/10 transition-colors btn-delete-row" title="删除此行">
+              <input type="text" value="展示用户信息列表，支持编辑和删除操作" class="w-full bg-surface-container border-none rounded-md px-3 py-2 text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors i18n-input" data-lang="zh" placeholder="输入翻译文本" />
+              <button class="inline-flex items-center justify-center w-7 h-7 rounded-md text-on-surface-variant/60 hover:text-error hover:bg-error/10 transition-colors btn-delete-row shrink-0" title="删除此行">
                 <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
               </button>
             </div>
 
             <!-- 行3：placeholder -->
-            <div class="grid grid-cols-[130px_repeat(5,1fr)_44px] px-4 py-2.5 items-center i18n-row" data-key="placeholder">
+            <div class="grid grid-cols-[130px_1fr_44px] px-4 py-3 items-center i18n-row" data-key="placeholder"
+              data-zh="请输入搜索关键词" data-en="Please enter search keywords" data-vn="Vui lòng nhập từ khóa tìm kiếm" data-th="กรุณาใส่คำค้นหา" data-ph="Mangyaring maglagay ng mga keyword sa paghahanap">
               <span class="text-sm font-mono text-on-surface font-medium">placeholder</span>
-              <input type="text" value="请输入搜索关键词" class="w-full bg-surface-container border-none rounded-md px-2.5 py-1.5 text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors i18n-input" data-lang="zh" />
-              <input type="text" value="Please enter search keywords" class="w-full bg-surface-container border-none rounded-md px-2.5 py-1.5 text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors i18n-input" data-lang="en" />
-              <input type="text" value="Vui lòng nhập từ khóa tìm kiếm" class="w-full bg-surface-container border-none rounded-md px-2.5 py-1.5 text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors i18n-input" data-lang="vn" />
-              <input type="text" value="กรุณาใส่คำค้นหา" class="w-full bg-surface-container border-none rounded-md px-2.5 py-1.5 text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors i18n-input" data-lang="th" />
-              <input type="text" value="Mangyaring maglagay ng mga keyword sa paghahanap" class="w-full bg-surface-container border-none rounded-md px-2.5 py-1.5 text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors i18n-input" data-lang="ph" />
-              <button class="inline-flex items-center justify-center w-7 h-7 rounded-md text-on-surface-variant/60 hover:text-error hover:bg-error/10 transition-colors btn-delete-row" title="删除此行">
+              <input type="text" value="请输入搜索关键词" class="w-full bg-surface-container border-none rounded-md px-3 py-2 text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors i18n-input" data-lang="zh" placeholder="输入翻译文本" />
+              <button class="inline-flex items-center justify-center w-7 h-7 rounded-md text-on-surface-variant/60 hover:text-error hover:bg-error/10 transition-colors btn-delete-row shrink-0" title="删除此行">
                 <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
               </button>
             </div>
 
             <!-- 行4：btn_submit -->
-            <div class="grid grid-cols-[130px_repeat(5,1fr)_44px] px-4 py-2.5 items-center i18n-row" data-key="btn_submit">
+            <div class="grid grid-cols-[130px_1fr_44px] px-4 py-3 items-center i18n-row" data-key="btn_submit"
+              data-zh="提交" data-en="Submit" data-vn="Gửi" data-th="ส่ง" data-ph="Isumite">
               <span class="text-sm font-mono text-on-surface font-medium">btn_submit</span>
-              <input type="text" value="提交" class="w-full bg-surface-container border-none rounded-md px-2.5 py-1.5 text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors i18n-input" data-lang="zh" />
-              <input type="text" value="Submit" class="w-full bg-surface-container border-none rounded-md px-2.5 py-1.5 text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors i18n-input" data-lang="en" />
-              <input type="text" value="Gửi" class="w-full bg-surface-container border-none rounded-md px-2.5 py-1.5 text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors i18n-input" data-lang="vn" />
-              <input type="text" value="ส่ง" class="w-full bg-surface-container border-none rounded-md px-2.5 py-1.5 text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors i18n-input" data-lang="th" />
-              <input type="text" value="Isumite" class="w-full bg-surface-container border-none rounded-md px-2.5 py-1.5 text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors i18n-input" data-lang="ph" />
-              <button class="inline-flex items-center justify-center w-7 h-7 rounded-md text-on-surface-variant/60 hover:text-error hover:bg-error/10 transition-colors btn-delete-row" title="删除此行">
+              <input type="text" value="提交" class="w-full bg-surface-container border-none rounded-md px-3 py-2 text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors i18n-input" data-lang="zh" placeholder="输入翻译文本" />
+              <button class="inline-flex items-center justify-center w-7 h-7 rounded-md text-on-surface-variant/60 hover:text-error hover:bg-error/10 transition-colors btn-delete-row shrink-0" title="删除此行">
                 <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
               </button>
             </div>
 
             <!-- 行5：btn_cancel -->
-            <div class="grid grid-cols-[130px_repeat(5,1fr)_44px] px-4 py-2.5 items-center i18n-row" data-key="btn_cancel">
+            <div class="grid grid-cols-[130px_1fr_44px] px-4 py-3 items-center i18n-row" data-key="btn_cancel"
+              data-zh="取消" data-en="Cancel" data-vn="Hủy" data-th="ยกเลิก" data-ph="Kanselahin">
               <span class="text-sm font-mono text-on-surface font-medium">btn_cancel</span>
-              <input type="text" value="取消" class="w-full bg-surface-container border-none rounded-md px-2.5 py-1.5 text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors i18n-input" data-lang="zh" />
-              <input type="text" value="Cancel" class="w-full bg-surface-container border-none rounded-md px-2.5 py-1.5 text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors i18n-input" data-lang="en" />
-              <input type="text" value="Hủy" class="w-full bg-surface-container border-none rounded-md px-2.5 py-1.5 text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors i18n-input" data-lang="vn" />
-              <input type="text" value="ยกเลิก" class="w-full bg-surface-container border-none rounded-md px-2.5 py-1.5 text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors i18n-input" data-lang="th" />
-              <input type="text" value="Kanselahin" class="w-full bg-surface-container border-none rounded-md px-2.5 py-1.5 text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors i18n-input" data-lang="ph" />
-              <button class="inline-flex items-center justify-center w-7 h-7 rounded-md text-on-surface-variant/60 hover:text-error hover:bg-error/10 transition-colors btn-delete-row" title="删除此行">
+              <input type="text" value="取消" class="w-full bg-surface-container border-none rounded-md px-3 py-2 text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors i18n-input" data-lang="zh" placeholder="输入翻译文本" />
+              <button class="inline-flex items-center justify-center w-7 h-7 rounded-md text-on-surface-variant/60 hover:text-error hover:bg-error/10 transition-colors btn-delete-row shrink-0" title="删除此行">
                 <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
               </button>
             </div>
 
             <!-- 行6：error_msg -->
-            <div class="grid grid-cols-[130px_repeat(5,1fr)_44px] px-4 py-2.5 items-center i18n-row" data-key="error_msg">
+            <div class="grid grid-cols-[130px_1fr_44px] px-4 py-3 items-center i18n-row" data-key="error_msg"
+              data-zh="操作失败，请重试" data-en="Operation failed, please try again" data-vn="Thao tác thất bại, vui lòng thử lại" data-th="การดำเนินการล้มเหลว โปรดลองอีกครั้ง" data-ph="Nabigo ang operasyon, pakiusap subukan muli">
               <span class="text-sm font-mono text-on-surface font-medium">error_msg</span>
-              <input type="text" value="操作失败，请重试" class="w-full bg-surface-container border-none rounded-md px-2.5 py-1.5 text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors i18n-input" data-lang="zh" />
-              <input type="text" value="Operation failed, please try again" class="w-full bg-surface-container border-none rounded-md px-2.5 py-1.5 text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors i18n-input" data-lang="en" />
-              <input type="text" value="Thao tác thất bại, vui lòng thử lại" class="w-full bg-surface-container border-none rounded-md px-2.5 py-1.5 text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors i18n-input" data-lang="vn" />
-              <input type="text" value="การดำเนินการล้มเหลว โปรดลองอีกครั้ง" class="w-full bg-surface-container border-none rounded-md px-2.5 py-1.5 text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors i18n-input" data-lang="th" />
-              <input type="text" value="Nabigo ang operasyon, pakiusap subukan muli" class="w-full bg-surface-container border-none rounded-md px-2.5 py-1.5 text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors i18n-input" data-lang="ph" />
-              <button class="inline-flex items-center justify-center w-7 h-7 rounded-md text-on-surface-variant/60 hover:text-error hover:bg-error/10 transition-colors btn-delete-row" title="删除此行">
+              <input type="text" value="操作失败，请重试" class="w-full bg-surface-container border-none rounded-md px-3 py-2 text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors i18n-input" data-lang="zh" placeholder="输入翻译文本" />
+              <button class="inline-flex items-center justify-center w-7 h-7 rounded-md text-on-surface-variant/60 hover:text-error hover:bg-error/10 transition-colors btn-delete-row shrink-0" title="删除此行">
                 <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
               </button>
             </div>
@@ -649,7 +665,37 @@
       });
 
       // =============================================
-      // 3. 多语言 Tab — 添加文本行
+      // 3. 语言 Tab 切换（新设计：一次只看一种语言）
+      // =============================================
+      $('#lang-tab-bar').on('click', '.lang-tab-btn', function() {
+        var lang = $(this).data('lang');
+        var langName = $(this).data('lang-name');
+
+        // 切换激活态
+        $('#lang-tab-bar').find('.lang-tab-btn').removeClass('active');
+        $(this).addClass('active');
+
+        // 更新列头
+        $('#i18n-lang-header').text(lang + ' (' + langName + ')');
+
+        // 遍历所有行，切换输入框
+        $('#i18n-table-body').find('.i18n-row').each(function() {
+          var row = $(this);
+          var input = row.find('.i18n-input');
+
+          // 从 data 属性读取该语言的翻译值
+          var val = row.data(lang) || '';
+          input.val(val);
+
+          // 更新 input 的 data-lang 和 placeholder
+          input.data('lang', lang);
+          input.attr('data-lang', lang);
+          input.attr('placeholder', langName);
+        });
+      });
+
+      // =============================================
+      // 4. 多语言 Tab — 添加文本行
       // =============================================
       $('#btn-add-key').on('click', function() {
         // 点击「+ 添加文本」应实现完整行为：
@@ -682,16 +728,22 @@
           return;
         }
 
-        // 构建新行
+        // 获取当前激活的语言
+        var activeLang = $('#lang-tab-bar').find('.lang-tab-btn.active').data('lang') || 'zh';
+        var activeLangName = $('#lang-tab-bar').find('.lang-tab-btn.active').data('lang-name') || '中文';
+
+        // 构建新行（简化：只含一个输入框，所有语言值存 data 属性）
+        var dataAttrs = '';
+        var langs = ['zh', 'en', 'vn', 'th', 'ph'];
+        for (var i = 0; i < langs.length; i++) {
+          dataAttrs += ' data-' + langs[i] + '=""';
+        }
+
         var newRow = '' +
-          '<div class="grid grid-cols-[130px_repeat(5,1fr)_44px] px-4 py-2.5 items-center i18n-row" data-key="' + keyName + '">' +
+          '<div class="grid grid-cols-[130px_1fr_44px] px-4 py-3 items-center i18n-row" data-key="' + keyName + '"' + dataAttrs + '>' +
             '<span class="text-sm font-mono text-on-surface font-medium">' + keyName + '</span>' +
-            '<input type="text" value="" class="w-full bg-surface-container border-none rounded-md px-2.5 py-1.5 text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors i18n-input" data-lang="zh" placeholder="中文翻译" />' +
-            '<input type="text" value="" class="w-full bg-surface-container border-none rounded-md px-2.5 py-1.5 text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors i18n-input" data-lang="en" placeholder="English" />' +
-            '<input type="text" value="" class="w-full bg-surface-container border-none rounded-md px-2.5 py-1.5 text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors i18n-input" data-lang="vn" placeholder="Tiếng Việt" />' +
-            '<input type="text" value="" class="w-full bg-surface-container border-none rounded-md px-2.5 py-1.5 text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors i18n-input" data-lang="th" placeholder="ไทย" />' +
-            '<input type="text" value="" class="w-full bg-surface-container border-none rounded-md px-2.5 py-1.5 text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors i18n-input" data-lang="ph" placeholder="Filipino" />' +
-            '<button class="inline-flex items-center justify-center w-7 h-7 rounded-md text-on-surface-variant/60 hover:text-error hover:bg-error/10 transition-colors btn-delete-row" title="删除此行">' +
+            '<input type="text" value="" class="w-full bg-surface-container border-none rounded-md px-3 py-2 text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors i18n-input" data-lang="' + activeLang + '" placeholder="' + activeLangName + '" />' +
+            '<button class="inline-flex items-center justify-center w-7 h-7 rounded-md text-on-surface-variant/60 hover:text-error hover:bg-error/10 transition-colors btn-delete-row shrink-0" title="删除此行">' +
               '<i data-lucide="trash-2" class="w-3.5 h-3.5"></i>' +
             '</button>' +
           '</div>';
@@ -730,15 +782,18 @@
       });
 
       // =============================================
-      // 5. 多语言 Tab — 输入变化时更新字典预览
+      // 5. 多语言 Tab — 输入变化时保存到 data 属性
       // =============================================
-      // 文本输入变化时，应通过 jQuery 监听 i18n-input 的 input 事件：
-      // 1. 读取所有行和语言输入框的值
-      // 2. 重新构建 JSON 对象
-      // 3. 更新 #json-preview 中的格式化 JSON 文本
-      // 由于字典预览为只读显示，此功能为实时同步预览
+      // 文本输入变化时：
+      // 1. 将输入值保存到行对应语言的 data 属性中
+      // 2. 切换语言时数据不丢失
+      // 3. 输出端由「字典预览」Tab 读取所有 data 属性生成 JSON
       $('#i18n-table-body').on('input', '.i18n-input', function() {
-        console.log('翻译内容已变更，应同步更新字典预览');
+        var row = $(this).closest('.i18n-row');
+        var lang = $(this).data('lang');
+        var val = $(this).val();
+        row.data(lang, val);
+        row.attr('data-' + lang, val);
       });
 
       // =============================================
