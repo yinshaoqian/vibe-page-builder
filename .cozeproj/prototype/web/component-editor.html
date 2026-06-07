@@ -912,7 +912,7 @@
       var selectedElId = null;
       var bindings = []; // { id, elId, elTag, eventType, eventbusName }
 
-      // 更新绑定清单 UI
+      // 更新绑定清单 UI（增强：显示事件类型+EventBus名+点击滚动定位）
       function renderBindingList() {
         var $list = $('#binding-list');
         var $count = $('#binding-count');
@@ -926,11 +926,16 @@
           var b = bindings[i];
           var eventLabel = b.eventType === 'click' ? '点击' : '双击';
           html += '' +
-            '<div class="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-surface-container transition-colors group binding-item cursor-default" data-binding-id="' + b.id + '" data-el-id="' + b.elId + '">' +
-              '<span class="inline-block w-1.5 h-1.5 rounded-full bg-primary/60 shrink-0"></span>' +
-              '<span class="text-xs font-mono text-on-surface truncate flex-1" title="' + b.elTag + '">' + b.elTag + '</span>' +
-              '<span class="text-[10px] text-on-surface-variant/50 shrink-0">' + eventLabel + '</span>' +
-              '<button class="p-0.5 rounded opacity-0 group-hover:opacity-100 text-on-surface-variant/50 hover:text-error transition-all btn-del-binding" data-binding-id="' + b.id + '" title="删除绑定">' +
+            '<div class="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-primary/5 transition-colors group binding-item cursor-pointer" data-binding-id="' + b.id + '" data-el-id="' + b.elId + '" title="点击定位到预览区对应元素">' +
+              '<span class="inline-flex items-center justify-center w-5 h-5 rounded bg-primary/10 text-primary text-[10px] font-bold shrink-0" title="事件绑定标识">⚡</span>' +
+              '<div class="flex-1 min-w-0">' +
+                '<div class="flex items-center gap-1.5">' +
+                  '<span class="text-xs font-mono text-on-surface font-medium truncate max-w-[100px]" title="' + b.elTag + '">' + b.elTag + '</span>' +
+                  '<span class="text-[10px] px-1 rounded bg-surface-container text-on-surface-variant/60">' + eventLabel + '</span>' +
+                '</div>' +
+                '<div class="text-[10px] text-on-surface-variant/40 mt-0.5 truncate">→ ' + b.eventbusName + '</div>' +
+              '</div>' +
+              '<button class="p-0.5 rounded opacity-0 group-hover:opacity-100 text-on-surface-variant/50 hover:text-error transition-all btn-del-binding shrink-0" data-binding-id="' + b.id + '" title="删除绑定">' +
                 '<i data-lucide="x" class="w-3 h-3"></i>' +
               '</button>' +
             '</div>';
@@ -953,16 +958,25 @@
         });
       }
 
-      // 高亮指定元素
+      // 高亮指定元素（增强：加动画闪烁）
       function highlightPreviewEl(elId, color) {
         clearPreviewHighlights();
         if (!elId) return;
         var $el = findPreviewEl(elId);
         if ($el.length) {
           $el.css({
-            'outline': '2px solid ' + color,
-            'outline-offset': '1px'
+            'outline': '3px solid ' + color,
+            'outline-offset': '2px',
+            'box-shadow': '0 0 12px ' + color + '40'
           });
+          // 滚动到可见区域
+          var $scroll = $('#preview-scroll');
+          var elTop = $el.position().top;
+          var scrollTop = $scroll.scrollTop();
+          var scrollBottom = scrollTop + $scroll.height();
+          if (elTop < scrollTop || elTop > scrollBottom - 60) {
+            $scroll.animate({ scrollTop: scrollTop + elTop - 40 }, 200);
+          }
         }
       }
 
@@ -1024,8 +1038,8 @@
         if (!pickerActive) return;
         e.stopPropagation();
 
-        var elId = $(this).data('el-id');
-        var elTag = $(this).data('el-tag') || $(this).prop('tagName').toLowerCase() + '#' + elId;
+        var elId = $(this).attr('data-el-id');
+        var elTag = $(this).attr('data-el-tag') || $(this).prop('tagName').toLowerCase() + '#' + elId;
         selectedElId = elId;
 
         // 蓝色高亮选中
@@ -1059,7 +1073,7 @@
         var eventType = $('#event-type-select').val();
         var eventbusName = $('#eventbus-name').val() || '$emit';
         var $el = findPreviewEl(selectedElId);
-        var elTag = $el.data('el-tag') || $el.prop('tagName').toLowerCase() + '#' + selectedElId;
+        var elTag = $el.attr('data-el-tag') || $el.prop('tagName').toLowerCase() + '#' + selectedElId;
 
         bindingIdCounter++;
         var binding = {
@@ -1072,9 +1086,14 @@
         bindings.push(binding);
         renderBindingList();
 
-        // 给预览元素添加绑定标记 data 属性
+        // 给预览元素添加绑定标记 data 属性 + 视觉角标
         $el.attr('data-has-binding', 'true');
         $el.attr('data-binding-id', bindingIdCounter);
+        // 添加绑定角标 visual indicator
+        if (!$el.find('.binding-badge').length) {
+          $el.css('position', 'relative');
+          $el.append('<span class="binding-badge absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-primary shadow-sm flex items-center justify-center text-[8px] text-white font-bold" title="已绑定事件: ' + eventbusName + '(' + eventType + ')">⚡</span>');
+        }
 
         // 退出选取模式
         deactivatePicker();
@@ -1108,16 +1127,18 @@
       // 删除绑定项
       $('#binding-list').on('click', '.btn-del-binding', function(e) {
         e.stopPropagation();
-        var bId = $(this).data('binding-id');
+        var bId = parseInt($(this).attr('data-binding-id'));
         if (!confirm('确定删除此事件绑定吗？')) return;
 
         // 从数组中移除
         for (var i = 0; i < bindings.length; i++) {
           if (bindings[i].id === bId) {
-            // 移除预览元素上的绑定标记
+            // 移除预览元素上的绑定标记和角标
             var $el = findPreviewEl(bindings[i].elId);
             $el.removeAttr('data-has-binding');
             $el.removeAttr('data-binding-id');
+            $el.find('.binding-badge').remove();
+            $el.css('position', '');
             bindings.splice(i, 1);
             break;
           }
@@ -1125,12 +1146,27 @@
         renderBindingList();
       });
 
-      // 绑定清单 hover → 预览区高亮
+      // 绑定清单 hover → 预览区高亮（使用 .attr 确保准确）
       $('#binding-list').on('mouseenter', '.binding-item', function() {
-        var elId = $(this).data('el-id');
+        var elId = $(this).attr('data-el-id');
         highlightPreviewEl(elId, '#2F6BFF');
       }).on('mouseleave', '.binding-item', function() {
         clearPreviewHighlights();
+      });
+
+      // 绑定清单 点击 → 定位到预览区对应元素并闪烁提示
+      $('#binding-list').on('click', '.binding-item', function() {
+        var elId = $(this).attr('data-el-id');
+        var $el = findPreviewEl(elId);
+        if ($el.length) {
+          highlightPreviewEl(elId, '#2F6BFF');
+          // 闪烁提示
+          $el.css('transition', 'outline-color 0.15s ease');
+          setTimeout(function() { $el.css('outline-color', '#16A37B'); }, 200);
+          setTimeout(function() { $el.css('outline-color', '#2F6BFF'); }, 400);
+          setTimeout(function() { $el.css('outline-color', '#16A37B'); }, 600);
+          setTimeout(function() { $el.css('outline-color', '#2F6BFF'); $el.css('transition', ''); }, 800);
+        }
       });
 
       // EventBus 名称变更时更新预览标签
@@ -1147,11 +1183,13 @@
       $('#btn-clear-bindings').on('click', function() {
         if (bindings.length === 0) return;
         if (!confirm('确定要清空所有事件绑定吗？')) return;
-        // 移除所有预览元素的绑定标记
+        // 移除所有预览元素的绑定标记和角标
         for (var i = 0; i < bindings.length; i++) {
           var $el = findPreviewEl(bindings[i].elId);
           $el.removeAttr('data-has-binding');
           $el.removeAttr('data-binding-id');
+          $el.find('.binding-badge').remove();
+          $el.css('position', '');
         }
         bindings = [];
         renderBindingList();
