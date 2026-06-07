@@ -177,10 +177,20 @@
                 :title="mode.label" @click="previewMode = mode.key">
                 <component :is="mode.icon" class="w-4 h-4" />
               </button>
+              <!-- 沙箱模式切换 -->
+              <span class="w-px h-4 bg-border mx-1"></span>
+              <button class="px-2 py-1 text-xs rounded transition-colors"
+                :class="sandboxMode ? 'bg-brand text-white' : 'text-text-secondary hover:text-text-primary hover:bg-surface-bg'"
+                @click="toggleSandboxMode">
+                {{ sandboxMode ? '组件沙箱' : '静态预览' }}
+              </button>
             </div>
           </div>
           <div class="flex-1 overflow-y-auto p-4" ref="previewRef">
-            <div id="preview-component"
+            <!-- 组件沙箱模式 -->
+            <SandboxPreviewPanel v-if="sandboxMode" />
+            <!-- 静态预览模式 -->
+            <div v-else id="preview-component"
               class="border border-border rounded-lg overflow-hidden transition-all mx-auto"
               :class="previewWidthClass">
               <div class="bg-gradient-to-r from-blue-600 to-blue-500 px-4 py-3 flex items-center gap-3"
@@ -238,9 +248,11 @@
 <script setup lang="ts">
 import { ref, reactive, computed, watch } from 'vue'
 import type { I18nEntry, EventBinding } from '../types'
+import SandboxPreviewPanel from '../components/SandboxPreviewPanel.vue'
 
 // === 文件列表 ===
 const activeFile = ref('UserTable.vue')
+const sandboxMode = ref(false)
 const componentFiles = [
   { name: 'UserTable.vue' },
   { name: 'NavBar.vue' },
@@ -498,6 +510,10 @@ const generatedVueCode = computed(() => {
 
   return template + script + style
 })
+
+function toggleSandboxMode() {
+  sandboxMode.value = !sandboxMode.value
+}
 
 function copyCode() {
   navigator.clipboard.writeText(generatedVueCode.value).then(() => {
