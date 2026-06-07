@@ -119,11 +119,14 @@ async function mountComponent() {
   loading.value = true
   error.value = ''
 
+  // 等旧实例完全销毁后再重建
+  await nextTick()
+
   try {
     // 清空容器
     sandboxRef.value.innerHTML = ''
 
-    // 注入组件样式（在挂载 Vue 应用之前插入 style 标签）
+    // 注入组件样式（作为独立 <style> 标签，与挂载点同级）
     if (props.styles) {
       const styleEl = document.createElement('style')
       styleEl.className = '__sandbox_css'
@@ -131,14 +134,19 @@ async function mountComponent() {
       sandboxRef.value.appendChild(styleEl)
     }
 
+    // 创建独立的挂载容器（Vue 只接管这个子元素，不影响并排的 <style>）
+    const mountPoint = document.createElement('div')
+    mountPoint.className = '__sandbox_mount'
+    sandboxRef.value.appendChild(mountPoint)
+
     // 为预览创建一个独立的 Vue 应用
     appInstance = createApp(props.componentDef)
 
     // 注入 Mock 全局属性
     createMockGlobals(appInstance, props.mockTranslations)
 
-    // 挂载
-    appInstance.mount(sandboxRef.value)
+    // 挂载到独立的挂载点，而非 sandboxRef 本身
+    appInstance.mount(mountPoint)
     loading.value = false
     emit('mounted')
   } catch (err: any) {
@@ -158,10 +166,12 @@ function destroyInstance() {
     }
     appInstance = null
   }
-  // 清理注入的样式
+  // 清理注入的样式和挂载点
   if (sandboxRef.value) {
     const styleEl = sandboxRef.value.querySelector('.__sandbox_css')
     if (styleEl) styleEl.remove()
+    const mountPoint = sandboxRef.value.querySelector('.__sandbox_mount')
+    if (mountPoint) mountPoint.remove()
   }
 }
 
