@@ -11,9 +11,17 @@
     {
       "type": "html",
       "options": {
-        "path": ".cozeproj/prototype/web/theme.html"
+        "path": ".cozeproj/prototype/web/component-editor.html"
       },
-      "title": "主题配置",
+      "title": "组件模板编辑器",
+      "size": "web"
+    },
+    {
+      "type": "html",
+      "options": {
+        "path": ".cozeproj/prototype/web/global-config.html"
+      },
+      "title": "全局配置",
       "size": "web"
     }
   ]

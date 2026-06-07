@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Inter 字体 -->
+  <link href="https://lf-code-agent.coze.cn/obj/x-ai-cn/fonts/google/google-all-fonts.css" rel="stylesheet"/>
+
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/jquery/jquery-3.7.1.min.js"></script>
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/lucide/lucide-1.11.0.min.js"></script>
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/tailwindcss/tailwindcss-browser-4.2.4.min.js"></script>
+
+  <style type="text/tailwindcss">
+    @theme {
+      /* === 品牌色 === */
+      --color-primary:              #2F6BFF;
+      --color-primary-container:    #D6E3FF;
+      --color-on-primary:           #FFFFFF;
+      /* === 背景 / 表面 === */
+      --color-background:                 #F6F8FB;
+      --color-surface-container-lowest:   #FFFFFF;
+      --color-surface:                    #FFFFFF;
+      --color-surface-container:          #EEF1F6;
+      --color-surface-container-high:     #E6EAF2;
+      --color-surface-container-highest:  #DEE4EE;
+      /* === 文字 === */
+      --color-on-surface:           #152033;
+      --color-on-surface-variant:   #637089;
+      /* === 功能色 === */
+      --color-success:  #16A37B;
+      --color-error:    #E5484D;
+      --color-warning:  #F59E0B;
+      /* === 边框 === */
+      --color-outline:          #D0D6E0;
+      --color-outline-variant:  #E6EAF2;
+      /* === 圆角 === */
+      --radius-sm:   0.25rem;
+      --radius-md:   0.375rem;
+      --radius-lg:   0.5rem;
+      --radius-xl:   0.75rem;
+      --radius-2xl:  1rem;
+      --radius-full: 9999px;
+      /* === 阴影 === */
+      --shadow-card:   0 2px 8px rgba(0,0,0,0.08);
+      --shadow-float:  0 10px 25px rgba(0,0,0,0.10);
+      --shadow-dialog: 0 25px 50px rgba(0,0,0,0.15);
+      /* === 字体 === */
+      --font-sans: "Inter", "PingFang SC", system-ui, sans-serif;
+    }
+  </style>
+
+  <!-- 图片兜底 -->
+  <script>
+    document.addEventListener('error', function (e) {
+      const img = e.target;
+      if (img.tagName !== 'IMG' || img.dataset.fallback) return;
+      img.dataset.fallback = '1';
+      const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const cat = img.getAttribute('data-category') || '其他';
+      const alt = img.getAttribute('alt') || '';
+      const label = esc(alt.length > 8 ? alt.slice(0, 8) + '…' : alt);
+      const icons = { '人物': '👤', '自然风景': '🏞', '动物': '🐾', '建筑城市': '🏙', '运动体育': '⚽', '交通工具': '🚗', '食物': '🍽', '服饰时尚': '👗', '商业科技': '💼', '游戏娱乐': '🎮', '艺术': '🎨', '其他': '🖼' };
+      const icon = icons[cat] || '🖼';
+      const w = img.width || 400, h = img.height || 300;
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><rect width="100%" height="100%" fill="%23f3f4f6"/><text x="50%" y="45%" text-anchor="middle" font-size="${Math.min(w, h) * 0.18}" dominant-baseline="central">${icon}</text><text x="50%" y="68%" text-anchor="middle" font-size="${Math.min(w, h) * 0.07}" fill="%239ca3af" font-family="system-ui,sans-serif" dominant-baseline="central">${label}</text></svg>`;
+      img.src = 'data:image/svg+xml,' + svg;
+    }, true);
+  </script>
+</head>
+
+<body class="bg-background text-on-surface font-sans">
+
+  <!-- @nav:start 导航组件 -->
+  <!-- ===== 顶部导航栏 ===== -->
+  <header class="bg-surface border-b border-outline-variant/20 sticky top-0 z-40 h-14 flex items-center justify-between px-5">
+    <div class="flex items-center gap-3">
+      <i data-lucide="layout-dashboard" class="w-5 h-5 text-primary"></i>
+      <span class="font-semibold text-base text-on-surface">搭建器</span>
+    </div>
+    <nav class="flex items-center gap-1">
+      <a href="builder.html" class="flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium rounded-md transition-colors text-on-surface-variant hover:text-on-surface hover:bg-surface-container"
+         id="tab-builder">
+        <i data-lucide="layers" class="w-4 h-4"></i>页面搭建
+      </a>
+      <a href="component-editor.html" class="flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium rounded-md transition-colors bg-primary/10 text-primary"
+         id="tab-component-editor" aria-current="page">
+        <i data-lucide="file-code" class="w-4 h-4"></i>组件模板
+      </a>
+      <a href="global-config.html" class="flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium rounded-md transition-colors text-on-surface-variant hover:text-on-surface hover:bg-surface-container"
+         id="tab-global-config">
+        <i data-lucide="settings-2" class="w-4 h-4"></i>全局配置
+      </a>
+    </nav>
+    <div class="flex items-center gap-2">
+      <span class="w-7 h-7 rounded-full bg-primary/10 text-primary text-xs font-medium flex items-center justify-center">初</span>
+    </div>
+  </header>
+
+  <div class="flex" style="height: calc(100vh - 3.5rem)">
+    <!-- ===== 左侧边栏：组件文件列表 ===== -->
+    <aside class="w-56 shrink-0 bg-surface border-r border-outline-variant/20 overflow-y-auto flex flex-col">
+      <!-- 文件列表头部 -->
+      <div class="px-3 pt-3 pb-2 flex items-center justify-between border-b border-outline-variant/10">
+        <span class="text-xs font-semibold text-on-surface-variant/70 uppercase tracking-wider">组件文件</span>
+        <span class="text-[11px] text-on-surface-variant/50">6 个文件</span>
+      </div>
+      <div class="flex-1 overflow-y-auto p-3 space-y-0.5" id="sidebar-content">
+        <!-- 文件列表-UserTable.vue（默认选中） -->
+        <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-md bg-primary/10 text-primary font-medium text-sm sidebar-file-item"
+           id="file-UserTable" data-file="UserTable.vue" aria-current="page">
+          <i data-lucide="file-code" class="w-4 h-4 shrink-0"></i>
+          <span class="truncate">UserTable.vue</span>
+        </a>
+        <!-- 文件列表-NavBar.vue -->
+        <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface font-medium text-sm transition-colors sidebar-file-item"
+           id="file-NavBar" data-file="NavBar.vue">
+          <i data-lucide="file-code" class="w-4 h-4 shrink-0"></i>
+          <span class="truncate">NavBar.vue</span>
+        </a>
+        <!-- 文件列表-DataChart.vue -->
+        <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface font-medium text-sm transition-colors sidebar-file-item"
+           id="file-DataChart" data-file="DataChart.vue">
+          <i data-lucide="file-code" class="w-4 h-4 shrink-0"></i>
+          <span class="truncate">DataChart.vue</span>
+        </a>
+        <!-- 文件列表-LoginForm.vue -->
+        <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface font-medium text-sm transition-colors sidebar-file-item"
+           id="file-LoginForm" data-file="LoginForm.vue">
+          <i data-lucide="file-code" class="w-4 h-4 shrink-0"></i>
+          <span class="truncate">LoginForm.vue</span>
+        </a>
+        <!-- 文件列表-SideMenu.vue -->
+        <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface font-medium text-sm transition-colors sidebar-file-item"
+           id="file-SideMenu" data-file="SideMenu.vue">
+          <i data-lucide="file-code" class="w-4 h-4 shrink-0"></i>
+          <span class="truncate">SideMenu.vue</span>
+        </a>
+        <!-- 文件列表-FooterBar.vue -->
+        <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface font-medium text-sm transition-colors sidebar-file-item"
+           id="file-FooterBar" data-file="FooterBar.vue">
+          <i data-lucide="file-code" class="w-4 h-4 shrink-0"></i>
+          <span class="truncate">FooterBar.vue</span>
+        </a>
+      </div>
+    </aside>
+
+    <!-- @main-content:start -->
+    <main class="flex-1 min-w-0 overflow-y-auto bg-background p-6">
+      <!-- ===== 页面标题 ===== -->
+      <div class="flex items-center justify-between mb-5">
+        <h1 class="text-xl font-bold text-on-surface">组件模板编辑器</h1>
+        <div class="flex items-center gap-2">
+          <span class="text-xs text-on-surface-variant/60 bg-surface-container px-2.5 py-1 rounded-md" id="editing-file-indicator">当前编辑：UserTable.vue</span>
+        </div>
+      </div>
+
+      <!-- ===== 小型 Tab 切换 ===== -->
+      <div class="flex items-center gap-1 border-b border-outline-variant/20 mb-5" id="editor-tabs">
+        <button class="px-4 py-2.5 text-sm font-medium rounded-t-md border-b-2 border-primary text-primary transition-colors editor-tab-btn"
+                id="tab-i18n" data-tab="panel-i18n">文本多语言</button>
+        <button class="px-4 py-2.5 text-sm font-medium rounded-t-md border-b-2 border-transparent text-on-surface-variant hover:text-on-surface transition-colors editor-tab-btn"
+                id="tab-color" data-tab="panel-color">颜色调整</button>
+        <button class="px-4 py-2.5 text-sm font-medium rounded-t-md border-b-2 border-transparent text-on-surface-variant hover:text-on-surface transition-colors editor-tab-btn"
+                id="tab-dict" data-tab="panel-dict">字典预览</button>
+      </div>
+
+      <!-- ===== Tab 面板容器 ===== -->
+
+      <!-- ===== 面板1：文本多语言（默认激活） ===== -->
+      <div class="editor-panel" id="panel-i18n">
+        <!-- 操作栏 -->
+        <div class="flex items-center justify-between mb-4">
+          <div class="flex items-center gap-2">
+            <button id="btn-add-key" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-primary text-on-primary hover:opacity-90 active:scale-[0.98] transition-all">
+              <i data-lucide="plus" class="w-3.5 h-3.5"></i>添加文本
+            </button>
+          </div>
+          <span class="text-xs text-on-surface-variant/50">共 <span id="i18n-row-count">6</span> 个文本 key</span>
+        </div>
+
+        <!-- 多语言翻译表 -->
+        <div class="bg-surface rounded-lg shadow-card overflow-hidden">
+          <!-- 表头 -->
+          <div class="grid grid-cols-[130px_repeat(5,1fr)_44px] px-4 py-3 bg-surface-container text-xs font-semibold text-on-surface-variant uppercase tracking-wide border-b border-outline-variant/10">
+            <span>Key</span>
+            <span>zh (中文)</span>
+            <span>en (English)</span>
+            <span>vn (Tiếng Việt)</span>
+            <span>th (ไทย)</span>
+            <span>ph (Filipino)</span>
+            <span></span>
+          </div>
+
+          <!-- 表体 -->
+          <div class="divide-y divide-outline-variant/10" id="i18n-table-body">
+
+            <!-- 行1：title -->
+            <div class="grid grid-cols-[130px_repeat(5,1fr)_44px] px-4 py-2.5 items-center i18n-row" data-key="title">
+              <span class="text-sm font-mono text-on-surface font-medium">title</span>
+              <input type="text" value="用户表格" class="w-full bg-surface-container border-none rounded-md px-2.5 py-1.5 text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors i18n-input" data-lang="zh" />
+              <input type="text" value="User Table" class="w-full bg-surface-container border-none rounded-md px-2.5 py-1.5 text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors i18n-input" data-lang="en" />
+              <input type="text" value="Bảng Người Dùng" class="w-full bg-surface-container border-none rounded-md px-2.5 py-1.5 text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors i18n-input" data-lang="vn" />
+              <input type="text" value="ตารางผู้ใช้" class="w-full bg-surface-container border-none rounded-md px-2.5 py-1.5 text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors i18n-input" data-lang="th" />
+              <input type="text" value="Talaan ng Gumagamit" class="w-full bg-surface-container border-none rounded-md px-2.5 py-1.5 text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors i18n-input" data-lang="ph" />
+              <button class="inline-flex items-center justify-center w-7 h-7 rounded-md text-on-surface-variant/60 hover:text-error hover:bg-error/10 transition-colors btn-delete-row" title="删除此行">
+                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+              </button>
+            </div>
+
+            <!-- 行2：description -->
+            <div class="grid grid-cols-[130px_repeat(5,1fr)_44px] px-4 py-2.5 items-center i18n-row" data-key="description">
+              <span class="text-sm font-mono text-on-surface font-medium">description</span>
+              <input type="text" value="展示用户信息列表，支持编辑和删除操作" class="w-full bg-surface-container border-none rounded-md px-2.5 py-1.5 text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors i18n-input" data-lang="zh" />
+              <input type="text" value="Display user list with edit and delete support" class="w-full bg-surface-container border-none rounded-md px-2.5 py-1.5 text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors i18n-input" data-lang="en" />
+              <input type="text" value="Hiển thị danh sách người dùng với hỗ trợ chỉnh sửa và xóa" class="w-full bg-surface-container border-none rounded-md px-2.5 py-1.5 text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors i18n-input" data-lang="vn" />
+              <input type="text" value="แสดงรายชื่อผู้ใช้พร้อมแก้ไขและลบ" class="w-full bg-surface-container border-none rounded-md px-2.5 py-1.5 text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors i18n-input" data-lang="th" />
+              <input type="text" value="Ipakita ang listahan ng user na may suporta sa pag-edit at pagtanggal" class="w-full bg-surface-container border-none rounded-md px-2.5 py-1.5 text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors i18n-input" data-lang="ph" />
+              <button class="inline-flex items-center justify-center w-7 h-7 rounded-md text-on-surface-variant/60 hover:text-error hover:bg-error/10 transition-colors btn-delete-row" title="删除此行">
+                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+              </button>
+            </div>
+
+            <!-- 行3：placeholder -->
+            <div class="grid grid-cols-[130px_repeat(5,1fr)_44px] px-4 py-2.5 items-center i18n-row" data-key="placeholder">
+              <span class="text-sm font-mono text-on-surface font-medium">placeholder</span>
+              <input type="text" value="请输入搜索关键词" class="w-full bg-surface-container border-none rounded-md px-2.5 py-1.5 text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors i18n-input" data-lang="zh" />
+              <input type="text" value="Please enter search keywords" class="w-full bg-surface-container border-none rounded-md px-2.5 py-1.5 text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors i18n-input" data-lang="en" />
+              <input type="text" value="Vui lòng nhập từ khóa tìm kiếm" class="w-full bg-surface-container border-none rounded-md px-2.5 py-1.5 text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors i18n-input" data-lang="vn" />
+              <input type="text" value="กรุณาใส่คำค้นหา" class="w-full bg-surface-container border-none rounded-md px-2.5 py-1.5 text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors i18n-input" data-lang="th" />
+              <input type="text" value="Mangyaring maglagay ng mga keyword sa paghahanap" class="w-full bg-surface-container border-none rounded-md px-2.5 py-1.5 text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors i18n-input" data-lang="ph" />
+              <button class="inline-flex items-center justify-center w-7 h-7 rounded-md text-on-surface-variant/60 hover:text-error hover:bg-error/10 transition-colors btn-delete-row" title="删除此行">
+                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+              </button>
+            </div>
+
+            <!-- 行4：btn_submit -->
+            <div class="grid grid-cols-[130px_repeat(5,1fr)_44px] px-4 py-2.5 items-center i18n-row" data-key="btn_submit">
+              <span class="text-sm font-mono text-on-surface font-medium">btn_submit</span>
+              <input type="text" value="提交" class="w-full bg-surface-container border-none rounded-md px-2.5 py-1.5 text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors i18n-input" data-lang="zh" />
+              <input type="text" value="Submit" class="w-full bg-surface-container border-none rounded-md px-2.5 py-1.5 text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors i18n-input" data-lang="en" />
+              <input type="text" value="Gửi" class="w-full bg-surface-container border-none rounded-md px-2.5 py-1.5 text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors i18n-input" data-lang="vn" />
+              <input type="text" value="ส่ง" class="w-full bg-surface-container border-none rounded-md px-2.5 py-1.5 text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors i18n-input" data-lang="th" />
+              <input type="text" value="Isumite" class="w-full bg-surface-container border-none rounded-md px-2.5 py-1.5 text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors i18n-input" data-lang="ph" />
+              <button class="inline-flex items-center justify-center w-7 h-7 rounded-md text-on-surface-variant/60 hover:text-error hover:bg-error/10 transition-colors btn-delete-row" title="删除此行">
+                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+              </button>
+            </div>
+
+            <!-- 行5：btn_cancel -->
+            <div class="grid grid-cols-[130px_repeat(5,1fr)_44px] px-4 py-2.5 items-center i18n-row" data-key="btn_cancel">
+              <span class="text-sm font-mono text-on-surface font-medium">btn_cancel</span>
+              <input type="text" value="取消" class="w-full bg-surface-container border-none rounded-md px-2.5 py-1.5 text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors i18n-input" data-lang="zh" />
+              <input type="text" value="Cancel" class="w-full bg-surface-container border-none rounded-md px-2.5 py-1.5 text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors i18n-input" data-lang="en" />
+              <input type="text" value="Hủy" class="w-full bg-surface-container border-none rounded-md px-2.5 py-1.5 text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors i18n-input" data-lang="vn" />
+              <input type="text" value="ยกเลิก" class="w-full bg-surface-container border-none rounded-md px-2.5 py-1.5 text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors i18n-input" data-lang="th" />
+              <input type="text" value="Kanselahin" class="w-full bg-surface-container border-none rounded-md px-2.5 py-1.5 text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors i18n-input" data-lang="ph" />
+              <button class="inline-flex items-center justify-center w-7 h-7 rounded-md text-on-surface-variant/60 hover:text-error hover:bg-error/10 transition-colors btn-delete-row" title="删除此行">
+                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+              </button>
+            </div>
+
+            <!-- 行6：error_msg -->
+            <div class="grid grid-cols-[130px_repeat(5,1fr)_44px] px-4 py-2.5 items-center i18n-row" data-key="error_msg">
+              <span class="text-sm font-mono text-on-surface font-medium">error_msg</span>
+              <input type="text" value="操作失败，请重试" class="w-full bg-surface-container border-none rounded-md px-2.5 py-1.5 text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors i18n-input" data-lang="zh" />
+              <input type="text" value="Operation failed, please try again" class="w-full bg-surface-container border-none rounded-md px-2.5 py-1.5 text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors i18n-input" data-lang="en" />
+              <input type="text" value="Thao tác thất bại, vui lòng thử lại" class="w-full bg-surface-container border-none rounded-md px-2.5 py-1.5 text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors i18n-input" data-lang="vn" />
+              <input type="text" value="การดำเนินการล้มเหลว โปรดลองอีกครั้ง" class="w-full bg-surface-container border-none rounded-md px-2.5 py-1.5 text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors i18n-input" data-lang="th" />
+              <input type="text" value="Nabigo ang operasyon, pakiusap subukan muli" class="w-full bg-surface-container border-none rounded-md px-2.5 py-1.5 text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors i18n-input" data-lang="ph" />
+              <button class="inline-flex items-center justify-center w-7 h-7 rounded-md text-on-surface-variant/60 hover:text-error hover:bg-error/10 transition-colors btn-delete-row" title="删除此行">
+                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+              </button>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== 面板2：颜色调整（默认隐藏） ===== -->
+      <div class="editor-panel hidden" id="panel-color">
+        <!-- 操作栏 -->
+        <div class="flex items-center justify-between mb-4">
+          <p class="text-sm text-on-surface-variant">为组件模板中的颜色变量替换为全局预设色值或自定义颜色。</p>
+          <button id="btn-reset-colors" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors">
+            <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i>重置
+          </button>
+        </div>
+
+        <!-- 颜色变量表 -->
+        <div class="bg-surface rounded-lg shadow-card overflow-hidden">
+          <!-- 表头 -->
+          <div class="grid grid-cols-[160px_1fr_1fr] px-4 py-3 bg-surface-container text-xs font-semibold text-on-surface-variant uppercase tracking-wide border-b border-outline-variant/10">
+            <span>颜色名称</span>
+            <span>当前值</span>
+            <span>操作</span>
+          </div>
+
+          <!-- 表体 -->
+          <div class="divide-y divide-outline-variant/10" id="color-table-body">
+
+            <!-- 颜色行1：primary -->
+            <div class="grid grid-cols-[160px_1fr_1fr] px-4 py-3 items-center gap-4 color-row" data-color-name="primary">
+              <span class="text-sm font-medium text-on-surface font-mono">primary</span>
+              <div class="flex items-center gap-2.5">
+                <span class="inline-block w-6 h-6 rounded-md border border-outline-variant/20 shrink-0 color-swatch" style="background-color:#2F6BFF;"></span>
+                <span class="text-sm font-mono text-on-surface color-hex">#2F6BFF</span>
+              </div>
+              <div class="flex items-center gap-2.5">
+                <select class="bg-surface-container border-none rounded-md px-2.5 py-1.5 text-xs text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors color-global-select">
+                  <option value="">— 替换为全局颜色 —</option>
+                  <option value="#2F6BFF">主色 #2F6BFF</option>
+                  <option value="#16A37B">次级 #16A37B</option>
+                  <option value="#152033">文字 #152033</option>
+                  <option value="#F59E0B">附属1 #F59E0B</option>
+                  <option value="#8B5CF6">附属2 #8B5CF6</option>
+                  <option value="#E5484D">附属3 #E5484D</option>
+                  <option value="#637089">附属4 #637089</option>
+                </select>
+                <input type="text" value="#2F6BFF" class="w-24 bg-surface-container border-none rounded-md px-2.5 py-1.5 text-xs font-mono text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors color-hex-input" placeholder="#000000" maxlength="7" />
+              </div>
+            </div>
+
+            <!-- 颜色行2：secondary -->
+            <div class="grid grid-cols-[160px_1fr_1fr] px-4 py-3 items-center gap-4 color-row" data-color-name="secondary">
+              <span class="text-sm font-medium text-on-surface font-mono">secondary</span>
+              <div class="flex items-center gap-2.5">
+                <span class="inline-block w-6 h-6 rounded-md border border-outline-variant/20 shrink-0 color-swatch" style="background-color:#16A37B;"></span>
+                <span class="text-sm font-mono text-on-surface color-hex">#16A37B</span>
+              </div>
+              <div class="flex items-center gap-2.5">
+                <select class="bg-surface-container border-none rounded-md px-2.5 py-1.5 text-xs text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors color-global-select">
+                  <option value="">— 替换为全局颜色 —</option>
+                  <option value="#2F6BFF">主色 #2F6BFF</option>
+                  <option value="#16A37B">次级 #16A37B</option>
+                  <option value="#152033">文字 #152033</option>
+                  <option value="#F59E0B">附属1 #F59E0B</option>
+                  <option value="#8B5CF6">附属2 #8B5CF6</option>
+                  <option value="#E5484D">附属3 #E5484D</option>
+                  <option value="#637089">附属4 #637089</option>
+                </select>
+                <input type="text" value="#16A37B" class="w-24 bg-surface-container border-none rounded-md px-2.5 py-1.5 text-xs font-mono text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors color-hex-input" placeholder="#000000" maxlength="7" />
+              </div>
+            </div>
+
+            <!-- 颜色行3：bg-card -->
+            <div class="grid grid-cols-[160px_1fr_1fr] px-4 py-3 items-center gap-4 color-row" data-color-name="bg-card">
+              <span class="text-sm font-medium text-on-surface font-mono">bg-card</span>
+              <div class="flex items-center gap-2.5">
+                <span class="inline-block w-6 h-6 rounded-md border border-outline-variant/20 shrink-0 color-swatch" style="background-color:#FFFFFF;"></span>
+                <span class="text-sm font-mono text-on-surface color-hex">#FFFFFF</span>
+              </div>
+              <div class="flex items-center gap-2.5">
+                <select class="bg-surface-container border-none rounded-md px-2.5 py-1.5 text-xs text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors color-global-select">
+                  <option value="">— 替换为全局颜色 —</option>
+                  <option value="#2F6BFF">主色 #2F6BFF</option>
+                  <option value="#16A37B">次级 #16A37B</option>
+                  <option value="#152033">文字 #152033</option>
+                  <option value="#F59E0B">附属1 #F59E0B</option>
+                  <option value="#8B5CF6">附属2 #8B5CF6</option>
+                  <option value="#E5484D">附属3 #E5484D</option>
+                  <option value="#637089">附属4 #637089</option>
+                </select>
+                <input type="text" value="#FFFFFF" class="w-24 bg-surface-container border-none rounded-md px-2.5 py-1.5 text-xs font-mono text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors color-hex-input" placeholder="#000000" maxlength="7" />
+              </div>
+            </div>
+
+            <!-- 颜色行4：text-body -->
+            <div class="grid grid-cols-[160px_1fr_1fr] px-4 py-3 items-center gap-4 color-row" data-color-name="text-body">
+              <span class="text-sm font-medium text-on-surface font-mono">text-body</span>
+              <div class="flex items-center gap-2.5">
+                <span class="inline-block w-6 h-6 rounded-md border border-outline-variant/20 shrink-0 color-swatch" style="background-color:#152033;"></span>
+                <span class="text-sm font-mono text-on-surface color-hex">#152033</span>
+              </div>
+              <div class="flex items-center gap-2.5">
+                <select class="bg-surface-container border-none rounded-md px-2.5 py-1.5 text-xs text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors color-global-select">
+                  <option value="">— 替换为全局颜色 —</option>
+                  <option value="#2F6BFF">主色 #2F6BFF</option>
+                  <option value="#16A37B">次级 #16A37B</option>
+                  <option value="#152033">文字 #152033</option>
+                  <option value="#F59E0B">附属1 #F59E0B</option>
+                  <option value="#8B5CF6">附属2 #8B5CF6</option>
+                  <option value="#E5484D">附属3 #E5484D</option>
+                  <option value="#637089">附属4 #637089</option>
+                </select>
+                <input type="text" value="#152033" class="w-24 bg-surface-container border-none rounded-md px-2.5 py-1.5 text-xs font-mono text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors color-hex-input" placeholder="#000000" maxlength="7" />
+              </div>
+            </div>
+
+            <!-- 颜色行5：border-light -->
+            <div class="grid grid-cols-[160px_1fr_1fr] px-4 py-3 items-center gap-4 color-row" data-color-name="border-light">
+              <span class="text-sm font-medium text-on-surface font-mono">border-light</span>
+              <div class="flex items-center gap-2.5">
+                <span class="inline-block w-6 h-6 rounded-md border border-outline-variant/20 shrink-0 color-swatch" style="background-color:#E6EAF2;"></span>
+                <span class="text-sm font-mono text-on-surface color-hex">#E6EAF2</span>
+              </div>
+              <div class="flex items-center gap-2.5">
+                <select class="bg-surface-container border-none rounded-md px-2.5 py-1.5 text-xs text-on-surface focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors color-global-select">
+                  <option value="">— 替换为全局颜色 —</option>
+                  <option value="#2F6BFF">主色 #2F6BFF</option>
+                  <option value="#16A37B">次级 #16A37B</option>
+                  <option value="#152033">文字 #152033</option>
+                  <option value="#F59E0B">附属1 #F59E0B</option>
+                  <option value="#8B5CF6">附属2 #8B5CF6</option>
+                  <option value="#E5484D">附属3 #E5484D</option>
+                  <option value="#637089">附属4 #637089</option>
+                </select>
+                <input type="text" value="#E6EAF2" class="w-24 bg-surface-container border-none rounded-md px-2.5 py-1.5 text-xs font-mono text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors color-hex-input" placeholder="#000000" maxlength="7" />
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== 面板3：字典预览（默认隐藏） ===== -->
+      <div class="editor-panel hidden" id="panel-dict">
+        <!-- 操作栏 -->
+        <div class="flex items-center justify-between mb-4">
+          <p class="text-sm text-on-surface-variant">多语言字典 JSON 预览，可一键复制或导出。</p>
+          <div class="flex items-center gap-2">
+            <button id="btn-copy-json" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors">
+              <i data-lucide="copy" class="w-3.5 h-3.5"></i>复制
+            </button>
+            <button id="btn-export-dict" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium bg-primary text-on-primary hover:opacity-90 active:scale-[0.98] transition-all">
+              <i data-lucide="download" class="w-3.5 h-3.5"></i>导出字典
+            </button>
+          </div>
+        </div>
+
+        <!-- JSON 预览 -->
+        <div class="bg-surface rounded-lg shadow-card overflow-hidden" id="json-preview-card">
+          <div class="px-4 py-2 bg-surface-container border-b border-outline-variant/10 flex items-center justify-between">
+            <span class="text-xs font-semibold text-on-surface-variant">dict.json</span>
+            <span class="text-[11px] text-on-surface-variant/50" id="json-size">约 4.2 KB</span>
+          </div>
+          <pre class="p-4 text-sm font-mono text-on-surface leading-relaxed overflow-x-auto" id="json-preview" style="max-height: 60vh; overflow-y: auto;">{
+  "zh": {
+    "title": "用户表格",
+    "description": "展示用户信息列表，支持编辑和删除操作",
+    "placeholder": "请输入搜索关键词",
+    "btn_submit": "提交",
+    "btn_cancel": "取消",
+    "error_msg": "操作失败，请重试"
+  },
+  "en": {
+    "title": "User Table",
+    "description": "Display user list with edit and delete support",
+    "placeholder": "Please enter search keywords",
+    "btn_submit": "Submit",
+    "btn_cancel": "Cancel",
+    "error_msg": "Operation failed, please try again"
+  },
+  "vn": {
+    "title": "Bảng Người Dùng",
+    "description": "Hiển thị danh sách người dùng với hỗ trợ chỉnh sửa và xóa",
+    "placeholder": "Vui lòng nhập từ khóa tìm kiếm",
+    "btn_submit": "Gửi",
+    "btn_cancel": "Hủy",
+    "error_msg": "Thao tác thất bại, vui lòng thử lại"
+  },
+  "th": {
+    "title": "ตารางผู้ใช้",
+    "description": "แสดงรายชื่อผู้ใช้พร้อมแก้ไขและลบ",
+    "placeholder": "กรุณาใส่คำค้นหา",
+    "btn_submit": "ส่ง",
+    "btn_cancel": "ยกเลิก",
+    "error_msg": "การดำเนินการล้มเหลว โปรดลองอีกครั้ง"
+  },
+  "ph": {
+    "title": "Talaan ng Gumagamit",
+    "description": "Ipakita ang listahan ng user na may suporta sa pag-edit at pagtanggal",
+    "placeholder": "Mangyaring maglagay ng mga keyword sa paghahanap",
+    "btn_submit": "Isumite",
+    "btn_cancel": "Kanselahin",
+    "error_msg": "Nabigo ang operasyon, pakiusap subukan muli"
+  }
+}</pre>
+        </div>
+      </div>
+
+    </main>
+    <!-- @main-content:end -->
+  </div>
+  <!-- @nav:end 导航组件 -->
+
+  <script>
+    lucide.createIcons();
+
+    $(function() {
+
+      // =============================================
+      // 1. 侧边栏 - 文件列表点击切换
+      // =============================================
+      $('#sidebar-content').on('click', '.sidebar-file-item', function(e) {
+        e.preventDefault();
+
+        // 切换激活态
+        $('#sidebar-content').find('.sidebar-file-item').removeClass('bg-primary/10 text-primary').addClass('text-on-surface-variant hover:bg-surface-container hover:text-on-surface');
+        $('#sidebar-content').find('.sidebar-file-item').removeAttr('aria-current');
+        $(this).removeClass('text-on-surface-variant hover:bg-surface-container hover:text-on-surface').addClass('bg-primary/10 text-primary');
+        $(this).attr('aria-current', 'page');
+
+        // 更新当前编辑指示
+        var fileName = $(this).data('file');
+        $('#editing-file-indicator').text('当前编辑：' + fileName);
+
+        // 切换文件时：
+        // 应实现完整行为：根据 fileName 加载对应组件的多语言数据、颜色变量、字典 JSON
+        // 1. 通过 AJAX 或本地数据查找对应组件的 i18n 配置
+        // 2. 更新多语言表格中的所有行数据
+        // 3. 更新颜色调整表中的颜色变量列表和值
+        // 4. 更新字典预览 JSON
+        console.log('切换文件:', fileName);
+      });
+
+      // =============================================
+      // 2. 主 Tab 切换：文本多语言 | 颜色调整 | 字典预览
+      // =============================================
+      $('#editor-tabs').on('click', '.editor-tab-btn', function() {
+        var tabId = $(this).data('tab');
+
+        // 切换 tab 按钮激活态
+        $('#editor-tabs').find('.editor-tab-btn').removeClass('border-primary text-primary').addClass('border-transparent text-on-surface-variant hover:text-on-surface');
+        $(this).removeClass('border-transparent text-on-surface-variant hover:text-on-surface').addClass('border-primary text-primary');
+
+        // 切换面板显示
+        $('.editor-panel').addClass('hidden');
+        $('#' + tabId).removeClass('hidden');
+      });
+
+      // =============================================
+      // 3. 多语言 Tab — 添加文本行
+      // =============================================
+      $('#btn-add-key').on('click', function() {
+        // 点击「+ 添加文本」应实现完整行为：
+        // 1. 弹出一个模态框或内联编辑区域，让用户输入 key 名称
+        // 2. key 名称格式校验（仅允许小写字母、数字、下划线）
+        // 3. 校验通过后，在表格末尾插入新行
+        // 4. 新行各语言输入框默认空值，可手动输入
+        // 5. 自动更新行计数和字典预览
+        // 6. key 名称不可与已有 key 重复，重复时给出提示
+
+        var keyName = prompt('请输入新文本 key 名称（仅允许小写字母、数字、下划线）：');
+        if (!keyName) return;
+
+        // 简单校验：不能为空、不能包含特殊字符
+        if (!/^[a-z_][a-z0-9_]*$/.test(keyName)) {
+          alert('key 名称仅允许小写字母、数字、下划线，且不能以数字开头');
+          return;
+        }
+
+        // 检查是否已存在
+        var exists = false;
+        $('.i18n-row').each(function() {
+          if ($(this).data('key') === keyName) {
+            exists = true;
+            return false;
+          }
+        });
+        if (exists) {
+          alert('key "' + keyName + '" 已存在，请使用其他名称');
+          return;
+        }
+
+        // 构建新行
+        var newRow = '' +
+          '<div class="grid grid-cols-[130px_repeat(5,1fr)_44px] px-4 py-2.5 items-center i18n-row" data-key="' + keyName + '">' +
+            '<span class="text-sm font-mono text-on-surface font-medium">' + keyName + '</span>' +
+            '<input type="text" value="" class="w-full bg-surface-container border-none rounded-md px-2.5 py-1.5 text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors i18n-input" data-lang="zh" placeholder="中文翻译" />' +
+            '<input type="text" value="" class="w-full bg-surface-container border-none rounded-md px-2.5 py-1.5 text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors i18n-input" data-lang="en" placeholder="English" />' +
+            '<input type="text" value="" class="w-full bg-surface-container border-none rounded-md px-2.5 py-1.5 text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors i18n-input" data-lang="vn" placeholder="Tiếng Việt" />' +
+            '<input type="text" value="" class="w-full bg-surface-container border-none rounded-md px-2.5 py-1.5 text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors i18n-input" data-lang="th" placeholder="ไทย" />' +
+            '<input type="text" value="" class="w-full bg-surface-container border-none rounded-md px-2.5 py-1.5 text-sm text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors i18n-input" data-lang="ph" placeholder="Filipino" />' +
+            '<button class="inline-flex items-center justify-center w-7 h-7 rounded-md text-on-surface-variant/60 hover:text-error hover:bg-error/10 transition-colors btn-delete-row" title="删除此行">' +
+              '<i data-lucide="trash-2" class="w-3.5 h-3.5"></i>' +
+            '</button>' +
+          '</div>';
+
+        $('#i18n-table-body').append(newRow);
+        lucide.createIcons();
+
+        // 更新行计数
+        updateRowCount();
+
+        // 添加新行后应同步更新字典预览中的 JSON 数据
+        console.log('添加新 key:', keyName);
+      });
+
+      // =============================================
+      // 4. 多语言 Tab — 删除行
+      // =============================================
+      $('#i18n-table-body').on('click', '.btn-delete-row', function() {
+        // 删除按钮 - 点击后：
+        // 1. 确认是否删除（至少保留一行时允许删除）
+        // 2. 移除该行 DOM 节点
+        // 3. 更新行计数
+        // 4. 同步更新字典预览中的 JSON
+
+        var rowCount = $('.i18n-row').length;
+        if (rowCount <= 1) {
+          alert('至少需要保留一个文本 key');
+          return;
+        }
+
+        if (!confirm('确定要删除文本 key "' + $(this).closest('.i18n-row').data('key') + '" 吗？')) return;
+
+        $(this).closest('.i18n-row').remove();
+        updateRowCount();
+        console.log('删除文本 key');
+      });
+
+      // =============================================
+      // 5. 多语言 Tab — 输入变化时更新字典预览
+      // =============================================
+      // 文本输入变化时，应通过 jQuery 监听 i18n-input 的 input 事件：
+      // 1. 读取所有行和语言输入框的值
+      // 2. 重新构建 JSON 对象
+      // 3. 更新 #json-preview 中的格式化 JSON 文本
+      // 由于字典预览为只读显示，此功能为实时同步预览
+      $('#i18n-table-body').on('input', '.i18n-input', function() {
+        console.log('翻译内容已变更，应同步更新字典预览');
+      });
+
+      // =============================================
+      // 6. 颜色调整 Tab — 全局颜色下拉选择
+      // =============================================
+      $('#color-table-body').on('change', '.color-global-select', function() {
+        var selectedVal = $(this).val();
+        if (!selectedVal) return;
+
+        var row = $(this).closest('.color-row');
+        row.find('.color-swatch').css('background-color', selectedVal);
+        row.find('.color-hex').text(selectedVal);
+        row.find('.color-hex-input').val(selectedVal);
+        $(this).val(''); // 重置下拉
+      });
+
+      // =============================================
+      // 7. 颜色调整 Tab — 直接输入 hex
+      // =============================================
+      $('#color-table-body').on('input', '.color-hex-input', function() {
+        var val = $(this).val();
+        // hex 颜色格式校验，完整行为：
+        // 1. 检查是否为有效的 6 位 hex（#RRGGBB）
+        // 2. 有效时更新色块和 hex 文本
+        // 3. 无效时不更新色块（保留上次有效值）
+        // 4. 输入框失去焦点时自动补全 # 前缀
+        if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
+          var row = $(this).closest('.color-row');
+          row.find('.color-swatch').css('background-color', val);
+          row.find('.color-hex').text(val);
+        }
+      });
+
+      $('#color-table-body').on('blur', '.color-hex-input', function() {
+        var val = $(this).val();
+        // 失去焦点时自动补全 #
+        if (val && val.indexOf('#') !== 0) {
+          val = '#' + val;
+          $(this).val(val);
+          if (/^#[0-9A-Fa-f]{6}$/.test(val)) {
+            var row = $(this).closest('.color-row');
+            row.find('.color-swatch').css('background-color', val);
+            row.find('.color-hex').text(val);
+          }
+        }
+      });
+
+      // =============================================
+      // 8. 颜色调整 Tab — 重置
+      // =============================================
+      $('#btn-reset-colors').on('click', function() {
+        // 重置按钮 - 应实现完整行为：
+        // 1. 弹出确认对话框
+        // 2. 将所有颜色变量恢复到组件模板提取时的原始值
+        // 3. 重置对应的输入框和色块
+        if (!confirm('确定要重置所有颜色变量为原始值吗？')) return;
+        console.log('重置所有颜色变量为原始值');
+      });
+
+      // =============================================
+      // 9. 字典预览 Tab — 复制 JSON
+      // =============================================
+      $('#btn-copy-json').on('click', function() {
+        // 复制按钮 - 点击后：
+        // 1. 获取 #json-preview 中的文本内容
+        // 2. 使用 Clipboard API 复制到剪贴板
+        // 3. 复制成功后更新按钮文字为「已复制」并在 2 秒后恢复
+        var jsonText = $('#json-preview').text();
+        navigator.clipboard.writeText(jsonText).then(function() {
+          var btn = $('#btn-copy-json');
+          btn.html('<i data-lucide="check" class="w-3.5 h-3.5"></i>已复制');
+          lucide.createIcons();
+          setTimeout(function() {
+            btn.html('<i data-lucide="copy" class="w-3.5 h-3.5"></i>复制');
+            lucide.createIcons();
+          }, 2000);
+        }).catch(function() {
+          alert('复制失败，请手动选择复制');
+        });
+      });
+
+      // =============================================
+      // 10. 字典预览 Tab — 导出字典
+      // =============================================
+      $('#btn-export-dict').on('click', function() {
+        // 导出按钮 - 应实现的完整行为：
+        // 1. 从多语言表格中收集当前所有翻译数据
+        // 2. 构建完整的多语言字典 JSON 对象
+        // 3. 通过 window.parent.postMessage 或自定义事件将 JSON 传出给父窗口/宿主
+        // 4. 同时可触发文件下载（生成 .json 文件供下载）
+        // 5. 导出完成后给出 toast 提示
+        var dict = buildDictionary();
+        console.log('postMessage 传出字典 JSON:', JSON.stringify(dict, null, 2));
+        // 模拟 postMessage
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage({ type: 'I18N_DICT_EXPORT', payload: dict }, '*');
+        }
+        alert('字典已通过 postMessage 传出，请在控制台查看导出的 JSON 数据。');
+      });
+
+      // =============================================
+      // 辅助函数
+      // =============================================
+      function updateRowCount() {
+        var count = $('.i18n-row').length;
+        $('#i18n-row-count').text(count);
+      }
+
+      function buildDictionary() {
+        // 构建字典函数 - 应实现的完整行为：
+        // 1. 遍历所有 .i18n-row 行
+        // 2. 对每行读取 data-key 和各语言 input 的值
+        // 3. 按 { "zh": { "key": "val" }, "en": { ... } } 格式组织
+        // 4. 返回完整的字典对象
+        var dict = { zh: {}, en: {}, vn: {}, th: {}, ph: {} };
+        var langs = ['zh', 'en', 'vn', 'th', 'ph'];
+        $('.i18n-row').each(function() {
+          var key = $(this).data('key');
+          var self = $(this);
+          $.each(langs, function(i, lang) {
+            dict[lang][key] = self.find('.i18n-input[data-lang="' + lang + '"]').val() || '';
+          });
+        });
+        return dict;
+      }
+
+    });
+  </script>
+</body>
+
+</html>

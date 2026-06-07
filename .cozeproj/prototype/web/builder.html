@@ -72,7 +72,7 @@
 
 <body class="bg-background text-on-surface font-sans">
 
-  <!-- @nav:start 导航组件，不需要的页面则不要复制此段 -->
+  <!-- @nav:start 导航组件 -->
   <!-- ===== 顶部导航栏 ===== -->
   <header class="bg-surface border-b border-outline-variant/20 sticky top-0 z-40 h-14 flex items-center justify-between px-5">
     <div class="flex items-center gap-3">
@@ -82,11 +82,15 @@
     <nav class="flex items-center gap-1">
       <a href="builder.html" class="flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium rounded-md transition-colors bg-primary/10 text-primary"
          id="tab-builder" aria-current="page">
-        <i data-lucide="layers" class="w-4 h-4"></i>页面设计
+        <i data-lucide="layers" class="w-4 h-4"></i>页面搭建
       </a>
-      <a href="theme.html" class="flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium rounded-md transition-colors text-on-surface-variant hover:text-on-surface hover:bg-surface-container"
-         id="tab-theme">
-        <i data-lucide="palette" class="w-4 h-4"></i>主题配置
+      <a href="component-editor.html" class="flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium rounded-md transition-colors text-on-surface-variant hover:text-on-surface hover:bg-surface-container"
+         id="tab-component-editor">
+        <i data-lucide="file-code" class="w-4 h-4"></i>组件模板
+      </a>
+      <a href="global-config.html" class="flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium rounded-md transition-colors text-on-surface-variant hover:text-on-surface hover:bg-surface-container"
+         id="tab-global-config">
+        <i data-lucide="settings-2" class="w-4 h-4"></i>全局配置
       </a>
     </nav>
     <div class="flex items-center gap-2">
@@ -98,126 +102,274 @@
     <!-- ===== 左侧边栏：组件面板 ===== -->
     <aside class="w-56 shrink-0 bg-surface border-r border-outline-variant/20 overflow-y-auto flex flex-col">
       <!-- 组件面板头部 -->
-      <div class="px-3 pt-3 pb-2 flex items-center justify-between">
+      <div class="px-3 pt-3 pb-1 flex items-center justify-between">
         <span class="text-xs font-semibold text-on-surface-variant/70 uppercase tracking-wider">组件面板</span>
-        <div class="relative">
-          <i data-lucide="search" class="w-3.5 h-3.5 absolute left-2 top-1/2 -translate-y-1/2 text-on-surface-variant/50 pointer-events-none"></i>
-          <input id="cmp-search" type="text" placeholder="搜索组件..." class="w-full bg-surface-container border-none rounded-md pl-7 pr-2 py-1.5 text-xs text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors" />
+      </div>
+
+      <!-- ===== Tab 切换条 ===== -->
+      <div id="cmp-tab-bar" class="flex items-stretch mx-3 mb-2 bg-surface-container rounded-md p-0.5">
+        <button id="tab-basic" class="flex-1 px-3 py-1.5 text-xs font-medium rounded text-on-surface bg-surface shadow-sm transition-colors">
+          基础组件
+        </button>
+        <button id="tab-modules" class="flex-1 px-3 py-1.5 text-xs font-medium rounded text-on-surface-variant hover:text-on-surface transition-colors">
+          组件模块
+        </button>
+      </div>
+
+      <!-- ===== 基础组件 Tab 内容 ===== -->
+      <div id="tab-basic-content" class="flex flex-col flex-1 min-h-0">
+        <!-- 搜索框 -->
+        <div class="px-3 pb-1.5">
+          <div class="relative">
+            <i data-lucide="search" class="w-3.5 h-3.5 absolute left-2 top-1/2 -translate-y-1/2 text-on-surface-variant/50 pointer-events-none"></i>
+            <input id="cmp-search" type="text" placeholder="搜索组件..." class="w-full bg-surface-container border-none rounded-md pl-7 pr-2 py-1.5 text-xs text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors" />
+          </div>
+        </div>
+
+        <!-- 组件分类列表 -->
+        <div class="flex-1 overflow-y-auto px-3 pb-3 space-y-3" id="sidebar-content">
+          <!-- ===== 布局组件 ===== -->
+          <div class="component-category">
+            <div class="flex items-center gap-1.5 px-1 py-1.5 cursor-pointer select-none" id="cat-layout">
+              <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-on-surface-variant/60"></i>
+              <span class="text-xs font-semibold text-on-surface-variant">布局组件</span>
+            </div>
+            <div class="grid grid-cols-2 gap-1.5 mt-1" id="cat-layout-items">
+              <!-- 组件-栅格 -->
+              <div class="flex flex-col items-center gap-1 px-2 py-2.5 rounded-md cursor-grab hover:bg-surface-container active:cursor-grabbing transition-colors border border-transparent hover:border-primary/20 component-item" id="cmp-grid" draggable="true" data-component-type="grid">
+                <i data-lucide="grid-3x3" class="w-4 h-4 text-on-surface-variant"></i>
+                <span class="text-[11px] text-on-surface-variant font-medium">栅格</span>
+              </div>
+              <!-- 组件-容器 -->
+              <div class="flex flex-col items-center gap-1 px-2 py-2.5 rounded-md cursor-grab hover:bg-surface-container active:cursor-grabbing transition-colors border border-transparent hover:border-primary/20 component-item" id="cmp-container" draggable="true" data-component-type="container">
+                <i data-lucide="square-dashed" class="w-4 h-4 text-on-surface-variant"></i>
+                <span class="text-[11px] text-on-surface-variant font-medium">容器</span>
+              </div>
+              <!-- 组件-卡片 -->
+              <div class="flex flex-col items-center gap-1 px-2 py-2.5 rounded-md cursor-grab hover:bg-surface-container active:cursor-grabbing transition-colors border border-transparent hover:border-primary/20 component-item" id="cmp-card" draggable="true" data-component-type="card">
+                <i data-lucide="credit-card" class="w-4 h-4 text-on-surface-variant"></i>
+                <span class="text-[11px] text-on-surface-variant font-medium">卡片</span>
+              </div>
+              <!-- 占位保持网格整齐 -->
+              <div></div>
+            </div>
+          </div>
+
+          <!-- ===== 基础组件 ===== -->
+          <div class="component-category">
+            <div class="flex items-center gap-1.5 px-1 py-1.5 cursor-pointer select-none" id="cat-basic">
+              <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-on-surface-variant/60"></i>
+              <span class="text-xs font-semibold text-on-surface-variant">基础组件</span>
+            </div>
+            <div class="grid grid-cols-2 gap-1.5 mt-1" id="cat-basic-items">
+              <!-- 组件-按钮 -->
+              <div class="flex flex-col items-center gap-1 px-2 py-2.5 rounded-md cursor-grab hover:bg-surface-container active:cursor-grabbing transition-colors border border-transparent hover:border-primary/20 component-item" id="cmp-button" draggable="true" data-component-type="button">
+                <i data-lucide="mouse-pointer-click" class="w-4 h-4 text-on-surface-variant"></i>
+                <span class="text-[11px] text-on-surface-variant font-medium">按钮</span>
+              </div>
+              <!-- 组件-文本 -->
+              <div class="flex flex-col items-center gap-1 px-2 py-2.5 rounded-md cursor-grab hover:bg-surface-container active:cursor-grabbing transition-colors border border-transparent hover:border-primary/20 component-item" id="cmp-text" draggable="true" data-component-type="text">
+                <i data-lucide="type" class="w-4 h-4 text-on-surface-variant"></i>
+                <span class="text-[11px] text-on-surface-variant font-medium">文本</span>
+              </div>
+              <!-- 组件-图片 -->
+              <div class="flex flex-col items-center gap-1 px-2 py-2.5 rounded-md cursor-grab hover:bg-surface-container active:cursor-grabbing transition-colors border border-transparent hover:border-primary/20 component-item" id="cmp-image" draggable="true" data-component-type="image">
+                <i data-lucide="image" class="w-4 h-4 text-on-surface-variant"></i>
+                <span class="text-[11px] text-on-surface-variant font-medium">图片</span>
+              </div>
+              <!-- 组件-图标 -->
+              <div class="flex flex-col items-center gap-1 px-2 py-2.5 rounded-md cursor-grab hover:bg-surface-container active:cursor-grabbing transition-colors border border-transparent hover:border-primary/20 component-item" id="cmp-icon" draggable="true" data-component-type="icon">
+                <i data-lucide="smile" class="w-4 h-4 text-on-surface-variant"></i>
+                <span class="text-[11px] text-on-surface-variant font-medium">图标</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- ===== 表单组件 ===== -->
+          <div class="component-category">
+            <div class="flex items-center gap-1.5 px-1 py-1.5 cursor-pointer select-none" id="cat-form">
+              <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-on-surface-variant/60"></i>
+              <span class="text-xs font-semibold text-on-surface-variant">表单组件</span>
+            </div>
+            <div class="grid grid-cols-2 gap-1.5 mt-1" id="cat-form-items">
+              <!-- 组件-输入框 -->
+              <div class="flex flex-col items-center gap-1 px-2 py-2.5 rounded-md cursor-grab hover:bg-surface-container active:cursor-grabbing transition-colors border border-transparent hover:border-primary/20 component-item" id="cmp-input" draggable="true" data-component-type="input">
+                <i data-lucide="text-cursor-input" class="w-4 h-4 text-on-surface-variant"></i>
+                <span class="text-[11px] text-on-surface-variant font-medium">输入框</span>
+              </div>
+              <!-- 组件-选择器 -->
+              <div class="flex flex-col items-center gap-1 px-2 py-2.5 rounded-md cursor-grab hover:bg-surface-container active:cursor-grabbing transition-colors border border-transparent hover:border-primary/20 component-item" id="cmp-select" draggable="true" data-component-type="select">
+                <i data-lucide="chevrons-up-down" class="w-4 h-4 text-on-surface-variant"></i>
+                <span class="text-[11px] text-on-surface-variant font-medium">选择器</span>
+              </div>
+              <!-- 组件-开关 -->
+              <div class="flex flex-col items-center gap-1 px-2 py-2.5 rounded-md cursor-grab hover:bg-surface-container active:cursor-grabbing transition-colors border border-transparent hover:border-primary/20 component-item" id="cmp-switch" draggable="true" data-component-type="switch">
+                <i data-lucide="toggle-left" class="w-4 h-4 text-on-surface-variant"></i>
+                <span class="text-[11px] text-on-surface-variant font-medium">开关</span>
+              </div>
+              <!-- 组件-日期选择 -->
+              <div class="flex flex-col items-center gap-1 px-2 py-2.5 rounded-md cursor-grab hover:bg-surface-container active:cursor-grabbing transition-colors border border-transparent hover:border-primary/20 component-item" id="cmp-datepicker" draggable="true" data-component-type="datepicker">
+                <i data-lucide="calendar" class="w-4 h-4 text-on-surface-variant"></i>
+                <span class="text-[11px] text-on-surface-variant font-medium">日期选择</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- ===== 数据组件 ===== -->
+          <div class="component-category">
+            <div class="flex items-center gap-1.5 px-1 py-1.5 cursor-pointer select-none" id="cat-data">
+              <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-on-surface-variant/60"></i>
+              <span class="text-xs font-semibold text-on-surface-variant">数据组件</span>
+            </div>
+            <div class="grid grid-cols-2 gap-1.5 mt-1" id="cat-data-items">
+              <!-- 组件-表格 -->
+              <div class="flex flex-col items-center gap-1 px-2 py-2.5 rounded-md cursor-grab hover:bg-surface-container active:cursor-grabbing transition-colors border border-transparent hover:border-primary/20 component-item" id="cmp-table" draggable="true" data-component-type="table">
+                <i data-lucide="table" class="w-4 h-4 text-on-surface-variant"></i>
+                <span class="text-[11px] text-on-surface-variant font-medium">表格</span>
+              </div>
+              <!-- 组件-列表 -->
+              <div class="flex flex-col items-center gap-1 px-2 py-2.5 rounded-md cursor-grab hover:bg-surface-container active:cursor-grabbing transition-colors border border-transparent hover:border-primary/20 component-item" id="cmp-list" draggable="true" data-component-type="list">
+                <i data-lucide="list" class="w-4 h-4 text-on-surface-variant"></i>
+                <span class="text-[11px] text-on-surface-variant font-medium">列表</span>
+              </div>
+              <!-- 组件-图表 -->
+              <div class="flex flex-col items-center gap-1 px-2 py-2.5 rounded-md cursor-grab hover:bg-surface-container active:cursor-grabbing transition-colors border border-transparent hover:border-primary/20 component-item" id="cmp-chart" draggable="true" data-component-type="chart">
+                <i data-lucide="bar-chart-3" class="w-4 h-4 text-on-surface-variant"></i>
+                <span class="text-[11px] text-on-surface-variant font-medium">图表</span>
+              </div>
+              <!-- 占位 -->
+              <div></div>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div class="flex-1 overflow-y-auto px-3 pb-3 space-y-3" id="sidebar-content">
-        <!-- ===== 布局组件 ===== -->
-        <div class="component-category">
-          <div class="flex items-center gap-1.5 px-1 py-1.5 cursor-pointer select-none" id="cat-layout">
-            <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-on-surface-variant/60"></i>
-            <span class="text-xs font-semibold text-on-surface-variant">布局组件</span>
-          </div>
-          <div class="grid grid-cols-2 gap-1.5 mt-1" id="cat-layout-items">
-            <!-- 组件-栅格 -->
-            <div class="flex flex-col items-center gap-1 px-2 py-2.5 rounded-md cursor-grab hover:bg-surface-container active:cursor-grabbing transition-colors border border-transparent hover:border-primary/20 component-item" id="cmp-grid" draggable="true" data-component-type="grid">
-              <i data-lucide="grid-3x3" class="w-4 h-4 text-on-surface-variant"></i>
-              <span class="text-[11px] text-on-surface-variant font-medium">栅格</span>
-            </div>
-            <!-- 组件-容器 -->
-            <div class="flex flex-col items-center gap-1 px-2 py-2.5 rounded-md cursor-grab hover:bg-surface-container active:cursor-grabbing transition-colors border border-transparent hover:border-primary/20 component-item" id="cmp-container" draggable="true" data-component-type="container">
-              <i data-lucide="square-dashed" class="w-4 h-4 text-on-surface-variant"></i>
-              <span class="text-[11px] text-on-surface-variant font-medium">容器</span>
-            </div>
-            <!-- 组件-卡片 -->
-            <div class="flex flex-col items-center gap-1 px-2 py-2.5 rounded-md cursor-grab hover:bg-surface-container active:cursor-grabbing transition-colors border border-transparent hover:border-primary/20 component-item" id="cmp-card" draggable="true" data-component-type="card">
-              <i data-lucide="credit-card" class="w-4 h-4 text-on-surface-variant"></i>
-              <span class="text-[11px] text-on-surface-variant font-medium">卡片</span>
-            </div>
-            <!-- 占位保持网格整齐 -->
-            <div></div>
-          </div>
+      <!-- ===== 组件模块 Tab 内容 ===== -->
+      <div id="tab-modules-content" class="flex flex-col flex-1 min-h-0" style="display: none;">
+        <!-- 导入按钮 -->
+        <div class="px-3 pb-1.5">
+          <button id="btn-import-module" class="w-full flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium text-primary bg-primary/10 hover:bg-primary/20 transition-colors border border-dashed border-primary/30">
+            <i data-lucide="plus" class="w-3.5 h-3.5"></i>导入组件
+          </button>
         </div>
 
-        <!-- ===== 基础组件 ===== -->
-        <div class="component-category">
-          <div class="flex items-center gap-1.5 px-1 py-1.5 cursor-pointer select-none" id="cat-basic">
-            <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-on-surface-variant/60"></i>
-            <span class="text-xs font-semibold text-on-surface-variant">基础组件</span>
-          </div>
-          <div class="grid grid-cols-2 gap-1.5 mt-1" id="cat-basic-items">
-            <!-- 组件-按钮 -->
-            <div class="flex flex-col items-center gap-1 px-2 py-2.5 rounded-md cursor-grab hover:bg-surface-container active:cursor-grabbing transition-colors border border-transparent hover:border-primary/20 component-item" id="cmp-button" draggable="true" data-component-type="button">
-              <i data-lucide="mouse-pointer-click" class="w-4 h-4 text-on-surface-variant"></i>
-              <span class="text-[11px] text-on-surface-variant font-medium">按钮</span>
-            </div>
-            <!-- 组件-文本 -->
-            <div class="flex flex-col items-center gap-1 px-2 py-2.5 rounded-md cursor-grab hover:bg-surface-container active:cursor-grabbing transition-colors border border-transparent hover:border-primary/20 component-item" id="cmp-text" draggable="true" data-component-type="text">
-              <i data-lucide="type" class="w-4 h-4 text-on-surface-variant"></i>
-              <span class="text-[11px] text-on-surface-variant font-medium">文本</span>
-            </div>
-            <!-- 组件-图片 -->
-            <div class="flex flex-col items-center gap-1 px-2 py-2.5 rounded-md cursor-grab hover:bg-surface-container active:cursor-grabbing transition-colors border border-transparent hover:border-primary/20 component-item" id="cmp-image" draggable="true" data-component-type="image">
-              <i data-lucide="image" class="w-4 h-4 text-on-surface-variant"></i>
-              <span class="text-[11px] text-on-surface-variant font-medium">图片</span>
-            </div>
-            <!-- 组件-图标 -->
-            <div class="flex flex-col items-center gap-1 px-2 py-2.5 rounded-md cursor-grab hover:bg-surface-container active:cursor-grabbing transition-colors border border-transparent hover:border-primary/20 component-item" id="cmp-icon" draggable="true" data-component-type="icon">
-              <i data-lucide="smile" class="w-4 h-4 text-on-surface-variant"></i>
-              <span class="text-[11px] text-on-surface-variant font-medium">图标</span>
+        <!-- 模块列表 -->
+        <div class="flex-1 overflow-y-auto px-3 pb-3 space-y-2" id="module-list">
+          <!-- 模块-UserTable.vue -->
+          <div class="flex flex-col px-3 py-2.5 rounded-lg bg-surface-container/50 hover:bg-surface-container border border-transparent hover:border-primary/20 transition-all cursor-grab active:cursor-grabbing module-item" id="module-usertable" draggable="true" data-module="UserTable.vue">
+            <div class="flex items-start justify-between">
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2">
+                  <i data-lucide="file-code" class="w-3.5 h-3.5 text-primary shrink-0"></i>
+                  <span class="text-xs font-semibold text-on-surface truncate">UserTable.vue</span>
+                  <span class="shrink-0 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-primary/10 text-primary">v1.2.0</span>
+                </div>
+                <p class="text-[11px] text-on-surface-variant/70 mt-1 leading-tight">用户管理表格组件，支持排序、筛选、分页</p>
+                <span class="text-[10px] text-on-surface-variant/50 mt-1 block">更新于 2024-03-15</span>
+              </div>
+              <!-- hover 操作按钮 -->
+              <div class="flex items-center gap-0.5 ml-2 opacity-0 group-hover:opacity-100 module-actions" style="display: none;">
+                <button class="p-1 rounded text-on-surface-variant hover:text-primary hover:bg-primary/10 transition-colors module-edit-btn" title="编辑">
+                  <i data-lucide="pencil" class="w-3 h-3"></i>
+                </button>
+                <button class="p-1 rounded text-on-surface-variant hover:text-error hover:bg-error/10 transition-colors module-delete-btn" title="删除">
+                  <i data-lucide="trash-2" class="w-3 h-3"></i>
+                </button>
+              </div>
             </div>
           </div>
-        </div>
 
-        <!-- ===== 表单组件 ===== -->
-        <div class="component-category">
-          <div class="flex items-center gap-1.5 px-1 py-1.5 cursor-pointer select-none" id="cat-form">
-            <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-on-surface-variant/60"></i>
-            <span class="text-xs font-semibold text-on-surface-variant">表单组件</span>
-          </div>
-          <div class="grid grid-cols-2 gap-1.5 mt-1" id="cat-form-items">
-            <!-- 组件-输入框 -->
-            <div class="flex flex-col items-center gap-1 px-2 py-2.5 rounded-md cursor-grab hover:bg-surface-container active:cursor-grabbing transition-colors border border-transparent hover:border-primary/20 component-item" id="cmp-input" draggable="true" data-component-type="input">
-              <i data-lucide="text-cursor-input" class="w-4 h-4 text-on-surface-variant"></i>
-              <span class="text-[11px] text-on-surface-variant font-medium">输入框</span>
-            </div>
-            <!-- 组件-选择器 -->
-            <div class="flex flex-col items-center gap-1 px-2 py-2.5 rounded-md cursor-grab hover:bg-surface-container active:cursor-grabbing transition-colors border border-transparent hover:border-primary/20 component-item" id="cmp-select" draggable="true" data-component-type="select">
-              <i data-lucide="chevrons-up-down" class="w-4 h-4 text-on-surface-variant"></i>
-              <span class="text-[11px] text-on-surface-variant font-medium">选择器</span>
-            </div>
-            <!-- 组件-开关 -->
-            <div class="flex flex-col items-center gap-1 px-2 py-2.5 rounded-md cursor-grab hover:bg-surface-container active:cursor-grabbing transition-colors border border-transparent hover:border-primary/20 component-item" id="cmp-switch" draggable="true" data-component-type="switch">
-              <i data-lucide="toggle-left" class="w-4 h-4 text-on-surface-variant"></i>
-              <span class="text-[11px] text-on-surface-variant font-medium">开关</span>
-            </div>
-            <!-- 组件-日期选择 -->
-            <div class="flex flex-col items-center gap-1 px-2 py-2.5 rounded-md cursor-grab hover:bg-surface-container active:cursor-grabbing transition-colors border border-transparent hover:border-primary/20 component-item" id="cmp-datepicker" draggable="true" data-component-type="datepicker">
-              <i data-lucide="calendar" class="w-4 h-4 text-on-surface-variant"></i>
-              <span class="text-[11px] text-on-surface-variant font-medium">日期选择</span>
+          <!-- 模块-NavBar.vue -->
+          <div class="flex flex-col px-3 py-2.5 rounded-lg bg-surface-container/50 hover:bg-surface-container border border-transparent hover:border-primary/20 transition-all cursor-grab active:cursor-grabbing module-item" id="module-navbar" draggable="true" data-module="NavBar.vue">
+            <div class="flex items-start justify-between">
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2">
+                  <i data-lucide="file-code" class="w-3.5 h-3.5 text-primary shrink-0"></i>
+                  <span class="text-xs font-semibold text-on-surface truncate">NavBar.vue</span>
+                  <span class="shrink-0 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-success/15 text-success">v2.0.1</span>
+                </div>
+                <p class="text-[11px] text-on-surface-variant/70 mt-1 leading-tight">响应式导航栏组件，支持多级菜单和面包屑</p>
+                <span class="text-[10px] text-on-surface-variant/50 mt-1 block">更新于 2024-03-12</span>
+              </div>
+              <!-- hover 操作按钮 -->
+              <div class="flex items-center gap-0.5 ml-2 module-actions" style="display: none;">
+                <button class="p-1 rounded text-on-surface-variant hover:text-primary hover:bg-primary/10 transition-colors module-edit-btn" title="编辑">
+                  <i data-lucide="pencil" class="w-3 h-3"></i>
+                </button>
+                <button class="p-1 rounded text-on-surface-variant hover:text-error hover:bg-error/10 transition-colors module-delete-btn" title="删除">
+                  <i data-lucide="trash-2" class="w-3 h-3"></i>
+                </button>
+              </div>
             </div>
           </div>
-        </div>
 
-        <!-- ===== 数据组件 ===== -->
-        <div class="component-category">
-          <div class="flex items-center gap-1.5 px-1 py-1.5 cursor-pointer select-none" id="cat-data">
-            <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-on-surface-variant/60"></i>
-            <span class="text-xs font-semibold text-on-surface-variant">数据组件</span>
+          <!-- 模块-DataChart.vue -->
+          <div class="flex flex-col px-3 py-2.5 rounded-lg bg-surface-container/50 hover:bg-surface-container border border-transparent hover:border-primary/20 transition-all cursor-grab active:cursor-grabbing module-item" id="module-datachart" draggable="true" data-module="DataChart.vue">
+            <div class="flex items-start justify-between">
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2">
+                  <i data-lucide="file-code" class="w-3.5 h-3.5 text-primary shrink-0"></i>
+                  <span class="text-xs font-semibold text-on-surface truncate">DataChart.vue</span>
+                  <span class="shrink-0 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-warning/15 text-warning">v1.0.3</span>
+                </div>
+                <p class="text-[11px] text-on-surface-variant/70 mt-1 leading-tight">数据可视化图表组件，支持折线图、柱状图、饼图</p>
+                <span class="text-[10px] text-on-surface-variant/50 mt-1 block">更新于 2024-03-08</span>
+              </div>
+              <div class="flex items-center gap-0.5 ml-2 module-actions" style="display: none;">
+                <button class="p-1 rounded text-on-surface-variant hover:text-primary hover:bg-primary/10 transition-colors module-edit-btn" title="编辑">
+                  <i data-lucide="pencil" class="w-3 h-3"></i>
+                </button>
+                <button class="p-1 rounded text-on-surface-variant hover:text-error hover:bg-error/10 transition-colors module-delete-btn" title="删除">
+                  <i data-lucide="trash-2" class="w-3 h-3"></i>
+                </button>
+              </div>
+            </div>
           </div>
-          <div class="grid grid-cols-2 gap-1.5 mt-1" id="cat-data-items">
-            <!-- 组件-表格 -->
-            <div class="flex flex-col items-center gap-1 px-2 py-2.5 rounded-md cursor-grab hover:bg-surface-container active:cursor-grabbing transition-colors border border-transparent hover:border-primary/20 component-item" id="cmp-table" draggable="true" data-component-type="table">
-              <i data-lucide="table" class="w-4 h-4 text-on-surface-variant"></i>
-              <span class="text-[11px] text-on-surface-variant font-medium">表格</span>
+
+          <!-- 模块-LoginForm.vue -->
+          <div class="flex flex-col px-3 py-2.5 rounded-lg bg-surface-container/50 hover:bg-surface-container border border-transparent hover:border-primary/20 transition-all cursor-grab active:cursor-grabbing module-item" id="module-loginform" draggable="true" data-module="LoginForm.vue">
+            <div class="flex items-start justify-between">
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2">
+                  <i data-lucide="file-code" class="w-3.5 h-3.5 text-primary shrink-0"></i>
+                  <span class="text-xs font-semibold text-on-surface truncate">LoginForm.vue</span>
+                  <span class="shrink-0 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-primary/10 text-primary">v1.1.0</span>
+                </div>
+                <p class="text-[11px] text-on-surface-variant/70 mt-1 leading-tight">登录表单组件，含账号密码验证码及第三方登录</p>
+                <span class="text-[10px] text-on-surface-variant/50 mt-1 block">更新于 2024-03-05</span>
+              </div>
+              <div class="flex items-center gap-0.5 ml-2 module-actions" style="display: none;">
+                <button class="p-1 rounded text-on-surface-variant hover:text-primary hover:bg-primary/10 transition-colors module-edit-btn" title="编辑">
+                  <i data-lucide="pencil" class="w-3 h-3"></i>
+                </button>
+                <button class="p-1 rounded text-on-surface-variant hover:text-error hover:bg-error/10 transition-colors module-delete-btn" title="删除">
+                  <i data-lucide="trash-2" class="w-3 h-3"></i>
+                </button>
+              </div>
             </div>
-            <!-- 组件-列表 -->
-            <div class="flex flex-col items-center gap-1 px-2 py-2.5 rounded-md cursor-grab hover:bg-surface-container active:cursor-grabbing transition-colors border border-transparent hover:border-primary/20 component-item" id="cmp-list" draggable="true" data-component-type="list">
-              <i data-lucide="list" class="w-4 h-4 text-on-surface-variant"></i>
-              <span class="text-[11px] text-on-surface-variant font-medium">列表</span>
+          </div>
+
+          <!-- 模块-SidePanel.vue -->
+          <div class="flex flex-col px-3 py-2.5 rounded-lg bg-surface-container/50 hover:bg-surface-container border border-transparent hover:border-primary/20 transition-all cursor-grab active:cursor-grabbing module-item" id="module-sidepanel" draggable="true" data-module="SidePanel.vue">
+            <div class="flex items-start justify-between">
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2">
+                  <i data-lucide="file-code" class="w-3.5 h-3.5 text-primary shrink-0"></i>
+                  <span class="text-xs font-semibold text-on-surface truncate">SidePanel.vue</span>
+                  <span class="shrink-0 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-success/15 text-success">v1.3.0</span>
+                </div>
+                <p class="text-[11px] text-on-surface-variant/70 mt-1 leading-tight">侧边面板组件，支持滑动展开、嵌套层级和动画</p>
+                <span class="text-[10px] text-on-surface-variant/50 mt-1 block">更新于 2024-02-28</span>
+              </div>
+              <div class="flex items-center gap-0.5 ml-2 module-actions" style="display: none;">
+                <button class="p-1 rounded text-on-surface-variant hover:text-primary hover:bg-primary/10 transition-colors module-edit-btn" title="编辑">
+                  <i data-lucide="pencil" class="w-3 h-3"></i>
+                </button>
+                <button class="p-1 rounded text-on-surface-variant hover:text-error hover:bg-error/10 transition-colors module-delete-btn" title="删除">
+                  <i data-lucide="trash-2" class="w-3 h-3"></i>
+                </button>
+              </div>
             </div>
-            <!-- 组件-图表 -->
-            <div class="flex flex-col items-center gap-1 px-2 py-2.5 rounded-md cursor-grab hover:bg-surface-container active:cursor-grabbing transition-colors border border-transparent hover:border-primary/20 component-item" id="cmp-chart" draggable="true" data-component-type="chart">
-              <i data-lucide="bar-chart-3" class="w-4 h-4 text-on-surface-variant"></i>
-              <span class="text-[11px] text-on-surface-variant font-medium">图表</span>
-            </div>
-            <!-- 占位 -->
-            <div></div>
           </div>
         </div>
       </div>
@@ -445,8 +597,83 @@
   <script>
     $(function() {
 
+      // ========== Tab 切换：基础组件 / 组件模块 ==========
+      // Tab 切换逻辑 - 点击 tab 按钮切换组件面板显示内容：
+      // 1. 点击 #tab-basic：添加 bg-surface shadow-sm text-on-surface 激活样式
+      //    移除 #tab-modules 的激活样式，添加 text-on-surface-variant
+      //    显示 #tab-basic-content，隐藏 #tab-modules-content
+      // 2. 点击 #tab-modules：反之亦然
+      $('#tab-basic').on('click', function() {
+        $('#tab-basic').addClass('bg-surface shadow-sm text-on-surface');
+        $('#tab-modules').removeClass('bg-surface shadow-sm text-on-surface').addClass('text-on-surface-variant');
+        $('#tab-basic-content').show();
+        $('#tab-modules-content').hide();
+      });
+      $('#tab-modules').on('click', function() {
+        $('#tab-modules').addClass('bg-surface shadow-sm text-on-surface');
+        $('#tab-basic').removeClass('bg-surface shadow-sm text-on-surface').addClass('text-on-surface-variant');
+        $('#tab-modules-content').show();
+        $('#tab-basic-content').hide();
+      });
+
+      // ========== 模块项 hover 显示操作按钮 ==========
+      // 模块列表项 hover 时显示编辑/删除按钮
+      $('#module-list').on('mouseenter', '.module-item', function() {
+        $(this).find('.module-actions').show();
+      }).on('mouseleave', '.module-item', function() {
+        $(this).find('.module-actions').hide();
+      });
+
+      // ========== 模块编辑按钮 ==========
+      // 编辑按钮 - 点击后应实现：
+      // 1. 从当前模块项获取模块名称（data-module 属性）
+      // 2. 打开组件编辑器页面（component-editor.html），传递模块名称参数
+      // 3. 在编辑器中加载该模块的源代码进行编辑
+      $('#module-list').on('click', '.module-edit-btn', function(e) {
+        e.stopPropagation();
+        var moduleName = $(this).closest('.module-item').data('module');
+        console.log('编辑模块:', moduleName);
+        // 后续实现：window.location.href = 'component-editor.html?module=' + moduleName;
+      });
+
+      // ========== 模块删除按钮 ==========
+      // 删除按钮 - 点击后应实现：
+      // 1. 弹出确认对话框询问是否删除模块
+      // 2. 确认后移除该模块的 DOM 节点
+      // 3. 若模块已在画布中被使用，提示"该模块已被页面引用，无法删除"
+      $('#module-list').on('click', '.module-delete-btn', function(e) {
+        e.stopPropagation();
+        var moduleName = $(this).closest('.module-item').data('module');
+        console.log('删除模块:', moduleName);
+        // 后续实现：确认弹窗后移除 $(this).closest('.module-item').remove();
+      });
+
+      // ========== 模块拖拽 ==========
+      // 模块拖拽 - 拖拽模块项到画布：
+      // 1. 监听 dragstart 事件，记录模块名称和路径
+      // 2. 在画布上 drop 时，根据模块名称创建对应的组件块并插入
+      // 3. 模块组件块与普通组件块样式一致，但额外带有模块标识
+      $('#module-list').on('dragstart', '.module-item', function(e) {
+        var moduleName = $(this).data('module');
+        e.originalEvent.dataTransfer.setData('text/plain', JSON.stringify({
+          type: 'module',
+          module: moduleName
+        }));
+        e.originalEvent.dataTransfer.effectAllowed = 'copy';
+        console.log('拖拽模块:', moduleName);
+      });
+
+      // ========== 导入组件按钮 ==========
+      // 导入按钮 - 点击后应实现：
+      // 1. 触发文件选择对话框（input[type=file]），接受 .vue 文件
+      // 2. 读取文件内容并解析组件信息（名称、版本等）
+      // 3. 在模块列表中添加新项
+      // 4. 若已存在同名模块，提示"模块已存在，是否覆盖？"
+      $('#btn-import-module').on('click', function() {
+        console.log('导入组件 - 应打开文件选择器选择 .vue 文件进行导入');
+      });
+
       // ========== 组件面板：分类折叠/展开 ==========
-      // 折叠交互 - 点击分类标题切换展开/收起
       $('#cat-layout').on('click', function() {
         var $icon = $(this).find('[data-lucide]');
         $('#cat-layout-items').slideToggle(150);
@@ -489,13 +716,6 @@
       });
 
       // ========== 组件项拖拽 ==========
-      // 拖拽组件 - 点击/拖拽：后续应实现完整的拖放逻辑：
-      // 1. 监听 dragstart 事件，记录被拖拽的组件类型和原始数据
-      // 2. 在画布区域监听 dragover（preventDefault 以允许放置）
-      // 3. dragenter/dragleave 时在目标位置显示蓝色插入指示线
-      // 4. drop 时根据组件类型创建对应的 DOM 结构插入到画布中
-      // 5. 新插入的组件自动设为选中状态，并打开属性面板
-      // 6. 同时记录操作到撤销栈（undo stack）
       $('.component-item').on('dragstart', function(e) {
         var type = $(this).data('component-type');
         var name = $(this).find('span').text().trim();
@@ -508,12 +728,6 @@
       });
 
       // ========== 画布：选中组件 ==========
-      // 选中组件 - 点击画布中的组件使其高亮并打开属性面板：
-      // 1. 移除所有 .canvas-component 的 .selected 类和蓝色边框
-      // 2. 为点击的组件添加 .selected 类和蓝色边框 (border-2 border-primary/40)
-      // 3. 更新属性面板中的组件名称和 ID
-      // 4. 将属性面板宽度从 0 展开到 256px (w-64)
-      // 5. 填充属性面板中的各字段值为当前组件的实际样式属性值
       $('#canvas-inner').on('click', '.canvas-component', function(e) {
         e.stopPropagation();
         $('.canvas-component').removeClass('selected').css('border-color', '').css('border-width', '');
@@ -521,9 +735,7 @@
         $(this).css('border-color', 'rgba(47,107,255,0.4)').css('border-width', '2px').css('border-style', 'solid');
 
         var compId = $(this).data('component-id');
-        // 展开属性面板
         $('#properties-panel').css('width', '256px');
-        // 更新面板信息
         $('#props-selected-name').text($(this).find('h2, span, p').first().text().trim() || '组件');
         console.log('选中组件:', compId);
       });
@@ -531,16 +743,9 @@
       // 点击画布空白处取消选中
       $('#canvas-inner').on('click', function() {
         $('.canvas-component').removeClass('selected').css('border-color', '').css('border-width', '');
-        // 此处应实现：关闭属性面板（收起右侧面板）
-        // 但保留点击关闭按钮的独立控制
       });
 
       // ========== 设备切换 ==========
-      // 设备切换 - 切换画布模拟的设备尺寸：
-      // 1. 点击 mobile → 画布宽度变为 375px，高度变为 812px，显示手机竖屏比例
-      // 2. 点击 tablet → 画布宽度变为 768px，高度变为 1024px
-      // 3. 点击 desktop → 画布宽度变为 100%（max-width: 480px 保持不变给内容区）
-      // 4. 活跃的 device-btn 添加 bg-surface shadow-sm
       $('#device-switcher').on('click', '.device-btn', function() {
         $('#device-switcher .device-btn').removeClass('bg-surface shadow-sm text-on-surface').addClass('text-on-surface-variant');
         $(this).addClass('bg-surface shadow-sm text-on-surface').removeClass('text-on-surface-variant');
@@ -556,10 +761,6 @@
       });
 
       // ========== 缩放控制 ==========
-      // 缩放 - 放大/缩小画布显示比例：
-      // 1. 每次点击放大 +10%，缩小 -10%，范围 50%~200%
-      // 2. 使用 CSS transform: scale() 实现，同时调整宽高避免留白
-      // 3. 缩放中心点保持画布左上角
       var zoom = 100;
       function updateZoom() {
         $('#zoom-level').text(zoom + '%');
@@ -575,20 +776,11 @@
       });
 
       // ========== 属性面板开关 ==========
-      // 属性面板关闭
       $('#btn-close-props').on('click', function() {
         $('#properties-panel').css('width', '0');
       });
 
       // ========== 保存按钮 ==========
-      // 保存操作 - 点击保存按钮模拟发送 postMessage：
-      // 1. 收集当前画布中的组件结构（遍历 #canvas-inner 下的 .canvas-component）
-      //    - 每个组件的 data-component-id、类型、位置、属性值
-      // 2. 序列化为 JSON 对象
-      // 3. 调用 window.parent.postMessage 发送给父窗口（若在 iframe 中）
-      //    - 消息格式：{ type: 'PAGE_SAVE', payload: { components: [...], timestamp: Date.now() } }
-      // 4. 若不在 iframe 中，将 JSON 数据写入 console 并弹出保存成功提示
-      // 5. 显示一个短暂的 Toast 提示 "保存成功"
       $('#btn-save-top, #btn-save-sidebar').on('click', function() {
         var components = [];
         $('#canvas-inner').find('.canvas-component').each(function() {
@@ -604,14 +796,12 @@
             timestamp: Date.now()
           }
         };
-        // 尝试 postMessage，若在 iframe 中则发送给父窗口
         try {
           if (window.parent && window.parent !== window) {
             window.parent.postMessage(payload, '*');
           }
         } catch(e) {}
         console.log('保存页面:', JSON.stringify(payload, null, 2));
-        // 简易 Toast 提示
         var $toast = $('<div id="toast-save" class="fixed top-4 right-4 bg-success text-white text-sm font-medium px-4 py-2.5 rounded-lg shadow-float z-50 flex items-center gap-2"><i data-lucide="check-circle" class="w-4 h-4"></i>保存成功</div>');
         $('body').append($toast);
         lucide.createIcons();
@@ -621,13 +811,6 @@
       });
 
       // ========== 撤销/重做 ==========
-      // 撤销按钮 - 后续应实现的完整交互：
-      // 1. 维护一个操作历史栈（undoStack = []），每个操作记录 { type, componentId, prevState, newState }
-      // 2. 每次对画布的操作（添加组件、删除组件、移动位置、修改属性）都 push 到栈中
-      // 3. 点击撤销：弹出栈顶操作，反向执行（如删除的组件重新插入，移动的移回原位）
-      // 4. 撤销后将被撤销的操作 push 到 redoStack
-      // 5. 点击重做：从 redoStack 弹出并重新执行
-      // 6. 栈深度限制 50 步，超出丢弃最早的操作
       $('#btn-undo').on('click', function() {
         console.log('撤销 - 应从 undoStack 弹出上一个操作并反向执行');
       });
@@ -636,29 +819,15 @@
       });
 
       // ========== 预览按钮 ==========
-      // 预览按钮 - 后续应实现的完整交互：
-      // 1. 收集当前画布中的所有组件配置（类型、属性、内容、样式）
-      // 2. 序列化为 JSON
-      // 3. 在新窗口/标签页中打开预览页面，通过 URL 参数或 localStorage 传递数据
-      // 4. 预览页面根据数据渲染出真实的用户页面（去除编辑框、选中态等编辑元素）
-      // 5. 预览页面的 URL 为 preview.html
       $('#btn-preview').on('click', function() {
         console.log('预览 - 应收集画布组件数据并在新窗口打开预览页面');
       });
 
       // ========== 删除组件 ==========
-      // 删除组件按钮 - 后续应实现的完整交互：
-      // 1. 获取当前选中的组件（有 .selected 类的 .canvas-component）
-      // 2. 弹出确认对话框（或直接删除）
-      // 3. 移除该 DOM 节点
-      // 4. 记录操作到 undoStack（以便撤销恢复）
-      // 5. 关闭属性面板
-      // 6. 若删除的是容器等父组件，同时删除其所有子组件
       $('#btn-delete-component').on('click', function() {
         var $selected = $('.canvas-component.selected');
         if ($selected.length > 0) {
           console.log('删除组件:', $selected.data('component-id'));
-          // 实际删除逻辑由后续实现完成
         } else {
           console.log('未选中任何组件');
         }

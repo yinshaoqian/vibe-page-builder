@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Inter 字体 -->
+  <link href="https://lf-code-agent.coze.cn/obj/x-ai-cn/fonts/google/google-all-fonts.css" rel="stylesheet"/>
+
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/jquery/jquery-3.7.1.min.js"></script>
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/lucide/lucide-1.11.0.min.js"></script>
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/tailwindcss/tailwindcss-browser-4.2.4.min.js"></script>
+
+  <style type="text/tailwindcss">
+    @theme {
+      /* === 品牌色 === */
+      --color-primary:              #2F6BFF;
+      --color-primary-container:    #D6E3FF;
+      --color-on-primary:           #FFFFFF;
+      /* === 背景 / 表面 === */
+      --color-background:                 #F6F8FB;
+      --color-surface-container-lowest:   #FFFFFF;
+      --color-surface:                    #FFFFFF;
+      --color-surface-container:          #EEF1F6;
+      --color-surface-container-high:     #E6EAF2;
+      --color-surface-container-highest:  #DEE4EE;
+      /* === 文字 === */
+      --color-on-surface:           #152033;
+      --color-on-surface-variant:   #637089;
+      /* === 功能色 === */
+      --color-success:  #16A37B;
+      --color-error:    #E5484D;
+      --color-warning:  #F59E0B;
+      /* === 边框 === */
+      --color-outline:          #D0D6E0;
+      --color-outline-variant:  #E6EAF2;
+      /* === 圆角 === */
+      --radius-sm:   0.25rem;
+      --radius-md:   0.375rem;
+      --radius-lg:   0.5rem;
+      --radius-xl:   0.75rem;
+      --radius-2xl:  1rem;
+      --radius-full: 9999px;
+      /* === 阴影 === */
+      --shadow-card:   0 2px 8px rgba(0,0,0,0.08);
+      --shadow-float:  0 10px 25px rgba(0,0,0,0.10);
+      --shadow-dialog: 0 25px 50px rgba(0,0,0,0.15);
+      /* === 字体 === */
+      --font-sans: "Inter", "PingFang SC", system-ui, sans-serif;
+    }
+  </style>
+
+  <!-- 图片兜底 -->
+  <script>
+    document.addEventListener('error', function (e) {
+      const img = e.target;
+      if (img.tagName !== 'IMG' || img.dataset.fallback) return;
+      img.dataset.fallback = '1';
+      const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const cat = img.getAttribute('data-category') || '其他';
+      const alt = img.getAttribute('alt') || '';
+      const label = esc(alt.length > 8 ? alt.slice(0, 8) + '…' : alt);
+      const icons = { '人物': '👤', '自然风景': '🏞', '动物': '🐾', '建筑城市': '🏙', '运动体育': '⚽', '交通工具': '🚗', '食物': '🍽', '服饰时尚': '👗', '商业科技': '💼', '游戏娱乐': '🎮', '艺术': '🎨', '其他': '🖼' };
+      const icon = icons[cat] || '🖼';
+      const w = img.width || 400, h = img.height || 300;
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><rect width="100%" height="100%" fill="%23f3f4f6"/><text x="50%" y="45%" text-anchor="middle" font-size="${Math.min(w, h) * 0.18}" dominant-baseline="central">${icon}</text><text x="50%" y="68%" text-anchor="middle" font-size="${Math.min(w, h) * 0.07}" fill="%239ca3af" font-family="system-ui,sans-serif" dominant-baseline="central">${label}</text></svg>`;
+      img.src = 'data:image/svg+xml,' + svg;
+    }, true);
+  </script>
+</head>
+
+<body class="bg-background text-on-surface font-sans">
+
+  <!-- @nav:start 导航组件，不需要的页面则不要复制此段 -->
+  <!-- ===== 顶部导航栏 ===== -->
+  <header class="bg-surface border-b border-outline-variant/20 sticky top-0 z-40 h-14 flex items-center justify-between px-5">
+    <div class="flex items-center gap-3">
+      <i data-lucide="layout-dashboard" class="w-5 h-5 text-primary"></i>
+      <span class="font-semibold text-base text-on-surface">搭建器</span>
+    </div>
+    <nav class="flex items-center gap-1">
+      <a href="builder.html" class="flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium rounded-md transition-colors text-on-surface-variant hover:text-on-surface hover:bg-surface-container" id="tab-builder">
+        <i data-lucide="layers" class="w-4 h-4"></i>页面搭建
+      </a>
+      <a href="component-editor.html" class="flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium rounded-md transition-colors text-on-surface-variant hover:text-on-surface hover:bg-surface-container" id="tab-component-editor">
+        <i data-lucide="file-code" class="w-4 h-4"></i>组件模板
+      </a>
+      <a href="global-config.html" class="flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium rounded-md transition-colors bg-primary/10 text-primary" id="tab-global-config" aria-current="page">
+        <i data-lucide="settings-2" class="w-4 h-4"></i>全局配置
+      </a>
+    </nav>
+    <div class="flex items-center gap-2">
+      <span class="w-7 h-7 rounded-full bg-primary/10 text-primary text-xs font-medium flex items-center justify-center">初</span>
+    </div>
+  </header>
+
+  <div class="flex" style="height: calc(100vh - 3.5rem)">
+    <!-- ===== 左侧边栏 ===== -->
+    <aside class="w-56 shrink-0 bg-surface border-r border-outline-variant/20 overflow-y-auto flex flex-col">
+      <div class="p-3 space-y-0.5 flex-1" id="sidebar-content">
+        <div class="text-xs text-on-surface-variant/60 font-medium px-3 py-2 uppercase tracking-wider" id="sidebar-section-title">配置分类</div>
+        <!-- 侧边栏-色彩配置 -->
+        <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-md bg-primary/10 text-primary font-medium text-sm" id="sidebar-color-config" aria-current="page">
+          <i data-lucide="palette" class="w-4 h-4 shrink-0"></i>色彩配置
+        </a>
+        <!-- 侧边栏-多语言配置 -->
+        <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface font-medium text-sm transition-colors" id="sidebar-lang-config">
+          <i data-lucide="languages" class="w-4 h-4 shrink-0"></i>多语言配置
+        </a>
+      </div>
+    </aside>
+
+    <!-- @main-content:start -->
+    <main class="flex-1 min-w-0 overflow-y-auto bg-background p-6">
+      <!-- ===== 色彩配置面板（默认激活） ===== -->
+      <div id="panel-color-config">
+        <!-- 标题区 -->
+        <div class="flex items-center justify-between mb-6">
+          <div>
+            <h1 class="text-2xl font-bold text-on-surface" id="page-title">全局配置</h1>
+            <p class="text-xs text-on-surface-variant mt-1" id="page-subtitle">管理主题颜色和多语言设置</p>
+          </div>
+        </div>
+
+        <!-- 色彩配置卡片 -->
+        <div class="bg-surface rounded-lg shadow-card overflow-hidden" id="color-config-card">
+          <div class="px-5 py-4 border-b border-outline-variant/20 flex items-center gap-2">
+            <i data-lucide="palette" class="w-4 h-4 text-primary"></i>
+            <h2 class="text-base font-semibold text-on-surface" id="color-config-title">色彩配置</h2>
+          </div>
+
+          <div class="p-5 space-y-4" id="color-items-container">
+            <!-- 颜色项-主色（Primary） -->
+            <div class="flex items-center gap-4 py-2" id="color-row-primary">
+              <span class="w-28 text-sm font-medium text-on-surface shrink-0" id="color-label-primary">主色（Primary）</span>
+              <div class="w-8 h-8 rounded-md border border-outline-variant/20 shrink-0" id="color-preview-primary" style="background-color: #2F6BFF;"></div>
+              <input type="text" class="w-28 bg-surface-container border-none rounded-md px-3 py-2 text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors font-mono" id="color-hex-primary" value="#2F6BFF" maxlength="7" />
+              <input type="color" class="w-9 h-9 rounded-md border-none cursor-pointer bg-transparent shrink-0 p-0.5" id="color-picker-primary" value="#2F6BFF" />
+            </div>
+            <!-- 颜色项-次级色（Secondary） -->
+            <div class="flex items-center gap-4 py-2" id="color-row-secondary">
+              <span class="w-28 text-sm font-medium text-on-surface shrink-0" id="color-label-secondary">次级色（Secondary）</span>
+              <div class="w-8 h-8 rounded-md border border-outline-variant/20 shrink-0" id="color-preview-secondary" style="background-color: #16A37B;"></div>
+              <input type="text" class="w-28 bg-surface-container border-none rounded-md px-3 py-2 text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors font-mono" id="color-hex-secondary" value="#16A37B" maxlength="7" />
+              <input type="color" class="w-9 h-9 rounded-md border-none cursor-pointer bg-transparent shrink-0 p-0.5" id="color-picker-secondary" value="#16A37B" />
+            </div>
+            <!-- 颜色项-文字色（Text） -->
+            <div class="flex items-center gap-4 py-2" id="color-row-text">
+              <span class="w-28 text-sm font-medium text-on-surface shrink-0" id="color-label-text">文字色（Text）</span>
+              <div class="w-8 h-8 rounded-md border border-outline-variant/20 shrink-0" id="color-preview-text" style="background-color: #152033;"></div>
+              <input type="text" class="w-28 bg-surface-container border-none rounded-md px-3 py-2 text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors font-mono" id="color-hex-text" value="#152033" maxlength="7" />
+              <input type="color" class="w-9 h-9 rounded-md border-none cursor-pointer bg-transparent shrink-0 p-0.5" id="color-picker-text" value="#152033" />
+            </div>
+            <!-- 颜色项-附属色 1（Accent 1） -->
+            <div class="flex items-center gap-4 py-2" id="color-row-accent1">
+              <span class="w-28 text-sm font-medium text-on-surface shrink-0" id="color-label-accent1">附属色 1（Accent 1）</span>
+              <div class="w-8 h-8 rounded-md border border-outline-variant/20 shrink-0" id="color-preview-accent1" style="background-color: #F59E0B;"></div>
+              <input type="text" class="w-28 bg-surface-container border-none rounded-md px-3 py-2 text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors font-mono" id="color-hex-accent1" value="#F59E0B" maxlength="7" />
+              <input type="color" class="w-9 h-9 rounded-md border-none cursor-pointer bg-transparent shrink-0 p-0.5" id="color-picker-accent1" value="#F59E0B" />
+            </div>
+            <!-- 颜色项-附属色 2（Accent 2） -->
+            <div class="flex items-center gap-4 py-2" id="color-row-accent2">
+              <span class="w-28 text-sm font-medium text-on-surface shrink-0" id="color-label-accent2">附属色 2（Accent 2）</span>
+              <div class="w-8 h-8 rounded-md border border-outline-variant/20 shrink-0" id="color-preview-accent2" style="background-color: #8B5CF6;"></div>
+              <input type="text" class="w-28 bg-surface-container border-none rounded-md px-3 py-2 text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors font-mono" id="color-hex-accent2" value="#8B5CF6" maxlength="7" />
+              <input type="color" class="w-9 h-9 rounded-md border-none cursor-pointer bg-transparent shrink-0 p-0.5" id="color-picker-accent2" value="#8B5CF6" />
+            </div>
+            <!-- 颜色项-附属色 3（Accent 3） -->
+            <div class="flex items-center gap-4 py-2" id="color-row-accent3">
+              <span class="w-28 text-sm font-medium text-on-surface shrink-0" id="color-label-accent3">附属色 3（Accent 3）</span>
+              <div class="w-8 h-8 rounded-md border border-outline-variant/20 shrink-0" id="color-preview-accent3" style="background-color: #E5484D;"></div>
+              <input type="text" class="w-28 bg-surface-container border-none rounded-md px-3 py-2 text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors font-mono" id="color-hex-accent3" value="#E5484D" maxlength="7" />
+              <input type="color" class="w-9 h-9 rounded-md border-none cursor-pointer bg-transparent shrink-0 p-0.5" id="color-picker-accent3" value="#E5484D" />
+            </div>
+            <!-- 颜色项-附属色 4（Accent 4） -->
+            <div class="flex items-center gap-4 py-2" id="color-row-accent4">
+              <span class="w-28 text-sm font-medium text-on-surface shrink-0" id="color-label-accent4">附属色 4（Accent 4）</span>
+              <div class="w-8 h-8 rounded-md border border-outline-variant/20 shrink-0" id="color-preview-accent4" style="background-color: #637089;"></div>
+              <input type="text" class="w-28 bg-surface-container border-none rounded-md px-3 py-2 text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors font-mono" id="color-hex-accent4" value="#637089" maxlength="7" />
+              <input type="color" class="w-9 h-9 rounded-md border-none cursor-pointer bg-transparent shrink-0 p-0.5" id="color-picker-accent4" value="#637089" />
+            </div>
+          </div>
+
+          <!-- 色彩配置-底部按钮 -->
+          <div class="px-5 py-4 border-t border-outline-variant/20 flex items-center justify-end gap-3" id="color-config-actions">
+            <button class="bg-surface-container text-on-surface border-none px-4 py-2 rounded-md text-sm font-medium hover:bg-surface-container-high active:scale-[0.98] transition-all" id="btn-color-reset">恢复默认</button>
+            <button class="bg-primary text-on-primary px-4 py-2 rounded-md text-sm font-medium hover:opacity-90 active:scale-[0.98] transition-all inline-flex items-center gap-2" id="btn-color-save">
+              <i data-lucide="check" class="w-3.5 h-3.5"></i>保存配置
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== 多语言配置面板（初始隐藏） ===== -->
+      <div id="panel-lang-config" class="hidden">
+        <!-- 标题区 -->
+        <div class="flex items-center justify-between mb-6">
+          <div>
+            <h1 class="text-2xl font-bold text-on-surface" id="page-title-lang">全局配置</h1>
+            <p class="text-xs text-on-surface-variant mt-1" id="page-subtitle-lang">管理主题颜色和多语言设置</p>
+          </div>
+        </div>
+
+        <!-- 多语言配置卡片 -->
+        <div class="bg-surface rounded-lg shadow-card overflow-hidden" id="lang-config-card">
+          <div class="px-5 py-4 border-b border-outline-variant/20 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <i data-lucide="languages" class="w-4 h-4 text-primary"></i>
+              <h2 class="text-base font-semibold text-on-surface" id="lang-config-title">多语言配置</h2>
+            </div>
+            <button class="bg-primary text-on-primary px-4 py-2 rounded-md text-sm font-medium hover:opacity-90 active:scale-[0.98] transition-all inline-flex items-center gap-2" id="btn-lang-save">
+              <i data-lucide="check" class="w-3.5 h-3.5"></i>保存语言配置
+            </button>
+          </div>
+
+          <!-- 语言列表表头 -->
+          <div class="grid grid-cols-12 px-5 py-3 bg-surface-container text-xs font-semibold text-on-surface-variant uppercase tracking-wide" id="lang-list-header">
+            <span class="col-span-2">语言代码</span>
+            <span class="col-span-3">语言名称</span>
+            <span class="col-span-3">状态</span>
+            <span class="col-span-4 text-right">操作</span>
+          </div>
+
+          <!-- 语言列表-zh（中文·默认） -->
+          <div class="divide-y divide-outline-variant/50" id="lang-list-body">
+            <div class="grid grid-cols-12 px-5 py-3.5 items-center hover:bg-surface-container/30 transition-colors" id="lang-row-zh">
+              <span class="col-span-2 text-sm font-mono font-medium text-on-surface" id="lang-code-zh">zh</span>
+              <span class="col-span-3 text-sm text-on-surface" id="lang-name-zh">中文<span class="text-xs text-on-surface-variant ml-1.5">默认</span></span>
+              <span class="col-span-3" id="lang-status-zh">
+                <span class="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-success/15 text-success" id="lang-badge-zh">启用</span>
+              </span>
+              <span class="col-span-4 flex items-center justify-end gap-3" id="lang-actions-zh">
+                <div class="flex items-center gap-2 text-xs text-on-surface-variant" id="lang-toggle-container-zh">
+                  <span class="text-on-surface-variant">开关</span>
+                  <button class="relative inline-flex h-5 w-9 items-center rounded-full bg-success cursor-pointer transition-colors" id="lang-toggle-zh" data-lang="zh" data-enabled="true" role="switch" aria-checked="true">
+                    <span class="inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform translate-x-[3px]"></span>
+                  </button>
+                </div>
+                <button class="text-xs text-on-surface-variant/50 cursor-not-allowed px-2 py-1 rounded-md" id="btn-delete-zh" disabled title="默认语言不可删除">删除</button>
+              </span>
+            </div>
+            <!-- 语言列表-en（English） -->
+            <div class="grid grid-cols-12 px-5 py-3.5 items-center hover:bg-surface-container/30 transition-colors" id="lang-row-en">
+              <span class="col-span-2 text-sm font-mono font-medium text-on-surface" id="lang-code-en">en</span>
+              <span class="col-span-3 text-sm text-on-surface" id="lang-name-en">English</span>
+              <span class="col-span-3" id="lang-status-en">
+                <span class="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-success/15 text-success" id="lang-badge-en">启用</span>
+              </span>
+              <span class="col-span-4 flex items-center justify-end gap-3" id="lang-actions-en">
+                <div class="flex items-center gap-2 text-xs text-on-surface-variant" id="lang-toggle-container-en">
+                  <span class="text-on-surface-variant">开关</span>
+                  <button class="relative inline-flex h-5 w-9 items-center rounded-full bg-success cursor-pointer transition-colors" id="lang-toggle-en" data-lang="en" data-enabled="true" role="switch" aria-checked="true">
+                    <span class="inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform translate-x-[3px]"></span>
+                  </button>
+                </div>
+                <button class="text-xs text-error hover:bg-error/10 px-2 py-1 rounded-md transition-colors font-medium" id="btn-delete-en" data-lang="en">删除</button>
+              </span>
+            </div>
+            <!-- 语言列表-vn（Tiếng Việt） -->
+            <div class="grid grid-cols-12 px-5 py-3.5 items-center hover:bg-surface-container/30 transition-colors" id="lang-row-vn">
+              <span class="col-span-2 text-sm font-mono font-medium text-on-surface" id="lang-code-vn">vn</span>
+              <span class="col-span-3 text-sm text-on-surface" id="lang-name-vn">Tiếng Việt</span>
+              <span class="col-span-3" id="lang-status-vn">
+                <span class="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-surface-container-high text-on-surface-variant" id="lang-badge-vn">禁用</span>
+              </span>
+              <span class="col-span-4 flex items-center justify-end gap-3" id="lang-actions-vn">
+                <div class="flex items-center gap-2 text-xs text-on-surface-variant" id="lang-toggle-container-vn">
+                  <span class="text-on-surface-variant">开关</span>
+                  <button class="relative inline-flex h-5 w-9 items-center rounded-full bg-surface-container-high cursor-pointer transition-colors" id="lang-toggle-vn" data-lang="vn" data-enabled="false" role="switch" aria-checked="false">
+                    <span class="inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform translate-x-[3px]"></span>
+                  </button>
+                </div>
+                <button class="text-xs text-error hover:bg-error/10 px-2 py-1 rounded-md transition-colors font-medium" id="btn-delete-vn" data-lang="vn">删除</button>
+              </span>
+            </div>
+            <!-- 语言列表-th（ไทย） -->
+            <div class="grid grid-cols-12 px-5 py-3.5 items-center hover:bg-surface-container/30 transition-colors" id="lang-row-th">
+              <span class="col-span-2 text-sm font-mono font-medium text-on-surface" id="lang-code-th">th</span>
+              <span class="col-span-3 text-sm text-on-surface" id="lang-name-th">ไทย</span>
+              <span class="col-span-3" id="lang-status-th">
+                <span class="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-surface-container-high text-on-surface-variant" id="lang-badge-th">禁用</span>
+              </span>
+              <span class="col-span-4 flex items-center justify-end gap-3" id="lang-actions-th">
+                <div class="flex items-center gap-2 text-xs text-on-surface-variant" id="lang-toggle-container-th">
+                  <span class="text-on-surface-variant">开关</span>
+                  <button class="relative inline-flex h-5 w-9 items-center rounded-full bg-surface-container-high cursor-pointer transition-colors" id="lang-toggle-th" data-lang="th" data-enabled="false" role="switch" aria-checked="false">
+                    <span class="inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform translate-x-[3px]"></span>
+                  </button>
+                </div>
+                <button class="text-xs text-error hover:bg-error/10 px-2 py-1 rounded-md transition-colors font-medium" id="btn-delete-th" data-lang="th">删除</button>
+              </span>
+            </div>
+            <!-- 语言列表-ph（Tagalog） -->
+            <div class="grid grid-cols-12 px-5 py-3.5 items-center hover:bg-surface-container/30 transition-colors" id="lang-row-ph">
+              <span class="col-span-2 text-sm font-mono font-medium text-on-surface" id="lang-code-ph">ph</span>
+              <span class="col-span-3 text-sm text-on-surface" id="lang-name-ph">Tagalog</span>
+              <span class="col-span-3" id="lang-status-ph">
+                <span class="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-surface-container-high text-on-surface-variant" id="lang-badge-ph">禁用</span>
+              </span>
+              <span class="col-span-4 flex items-center justify-end gap-3" id="lang-actions-ph">
+                <div class="flex items-center gap-2 text-xs text-on-surface-variant" id="lang-toggle-container-ph">
+                  <span class="text-on-surface-variant">开关</span>
+                  <button class="relative inline-flex h-5 w-9 items-center rounded-full bg-surface-container-high cursor-pointer transition-colors" id="lang-toggle-ph" data-lang="ph" data-enabled="false" role="switch" aria-checked="false">
+                    <span class="inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform translate-x-[3px]"></span>
+                  </button>
+                </div>
+                <button class="text-xs text-error hover:bg-error/10 px-2 py-1 rounded-md transition-colors font-medium" id="btn-delete-ph" data-lang="ph">删除</button>
+              </span>
+            </div>
+          </div>
+
+          <!-- 添加语言按钮区域 -->
+          <div class="px-5 py-4 border-t border-outline-variant/20" id="lang-add-area">
+            <!-- 添加语言-已展开表单（初始隐藏） -->
+            <div class="hidden mb-3" id="lang-add-form">
+              <div class="flex items-end gap-3">
+                <div class="flex-1">
+                  <label class="block text-xs font-medium text-on-surface-variant mb-1.5" for="input-lang-code">语言代码</label>
+                  <input type="text" class="w-full bg-surface-container border-none rounded-md px-3 py-2 text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors" id="input-lang-code" placeholder="如：ja" maxlength="10" />
+                </div>
+                <div class="flex-1">
+                  <label class="block text-xs font-medium text-on-surface-variant mb-1.5" for="input-lang-name">语言名称</label>
+                  <input type="text" class="w-full bg-surface-container border-none rounded-md px-3 py-2 text-sm text-on-surface placeholder:text-on-surface-variant/50 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors" id="input-lang-name" placeholder="如：日本語" maxlength="20" />
+                </div>
+                <button class="bg-primary text-on-primary px-4 py-2 rounded-md text-sm font-medium hover:opacity-90 active:scale-[0.98] transition-all" id="btn-lang-add-confirm">添加</button>
+                <button class="bg-surface-container text-on-surface border-none px-4 py-2 rounded-md text-sm font-medium hover:bg-surface-container-high active:scale-[0.98] transition-all" id="btn-lang-add-cancel">取消</button>
+              </div>
+            </div>
+            <!-- 添加语言按钮 -->
+            <button class="text-primary text-sm font-medium hover:underline inline-flex items-center gap-1.5" id="btn-lang-add">
+              <i data-lucide="plus" class="w-3.5 h-3.5"></i>添加语言
+            </button>
+          </div>
+        </div>
+      </div>
+    </main>
+    <!-- @main-content:end -->
+  </div>
+  <!-- @nav:end 导航组件，不需要的页面则不要复制此段 -->
+
+  <script>
+    lucide.createIcons();
+
+    $(function() {
+
+      // ========== 侧边栏切换 ==========
+      // 切换侧边栏激活态：点击色彩配置/多语言配置，切换对应面板
+      $('#sidebar-color-config, #sidebar-lang-config').on('click', function(e) {
+        e.preventDefault();
+        const target = $(this).attr('id');
+
+        // 切换侧边栏激活样式
+        $('#sidebar-color-config, #sidebar-lang-config').removeClass('bg-primary/10 text-primary').addClass('text-on-surface-variant hover:bg-surface-container hover:text-on-surface');
+        $(this).removeClass('text-on-surface-variant hover:bg-surface-container hover:text-on-surface').addClass('bg-primary/10 text-primary');
+
+        // 更新 aria-current
+        $('#sidebar-color-config, #sidebar-lang-config').removeAttr('aria-current');
+        $(this).attr('aria-current', 'page');
+
+        // 切换面板
+        if (target === 'sidebar-color-config') {
+          $('#panel-color-config').removeClass('hidden');
+          $('#panel-lang-config').addClass('hidden');
+        } else {
+          $('#panel-lang-config').removeClass('hidden');
+          $('#panel-color-config').addClass('hidden');
+        }
+      });
+
+      // ========== 色彩配置 - 颜色值联动 ==========
+      // 颜色选择器 → hex输入 + 预览方块
+      $('#color-picker-primary, #color-picker-secondary, #color-picker-text, #color-picker-accent1, #color-picker-accent2, #color-picker-accent3, #color-picker-accent4').on('input', function() {
+        const colorKey = $(this).attr('id').replace('color-picker-', '');
+        const val = $(this).val();
+        $('#color-hex-' + colorKey).val(val.toUpperCase());
+        $('#color-preview-' + colorKey).css('background-color', val);
+      });
+
+      // hex输入 → 预览方块 + 颜色选择器
+      $('#color-hex-primary, #color-hex-secondary, #color-hex-text, #color-hex-accent1, #color-hex-accent2, #color-hex-accent3, #color-hex-accent4').on('input', function() {
+        const colorKey = $(this).attr('id').replace('color-hex-', '');
+        let val = $(this).val().trim();
+        if (/^#[0-9a-fA-F]{6}$/.test(val)) {
+          $('#color-preview-' + colorKey).css('background-color', val);
+          $('#color-picker-' + colorKey).val(val);
+        }
+      });
+
+      // ========== 色彩配置 - 恢复默认 ==========
+      const defaultColors = {
+        primary: '#2F6BFF',
+        secondary: '#16A37B',
+        text: '#152033',
+        accent1: '#F59E0B',
+        accent2: '#8B5CF6',
+        accent3: '#E5484D',
+        accent4: '#637089'
+      };
+
+      $('#btn-color-reset').on('click', function() {
+        $.each(defaultColors, function(key, hex) {
+          $('#color-hex-' + key).val(hex);
+          $('#color-preview-' + key).css('background-color', hex);
+          $('#color-picker-' + key).val(hex);
+        });
+      });
+
+      // ========== 色彩配置 - 保存配置（postMessage） ==========
+      $('#btn-color-save').on('click', function() {
+        const colorConfig = {};
+        $.each(defaultColors, function(key) {
+          colorConfig[key] = $('#color-hex-' + key).val().trim();
+        });
+        // 模拟 postMessage 传出颜色配置 JSON
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage({ type: 'color-config-save', payload: colorConfig }, '*');
+        } else {
+          console.log('颜色配置已保存:', JSON.stringify(colorConfig, null, 2));
+        }
+        // 保存成功反馈
+        const $btn = $(this);
+        const origHtml = $btn.html();
+        $btn.html('<i data-lucide="check-circle" class="w-3.5 h-3.5"></i>已保存').prop('disabled', true);
+        setTimeout(function() {
+          $btn.html(origHtml).prop('disabled', false);
+          lucide.createIcons();
+        }, 1500);
+      });
+
+      // ========== 多语言配置 - 语言开关切换 ==========
+      $('#lang-toggle-zh, #lang-toggle-en, #lang-toggle-vn, #lang-toggle-th, #lang-toggle-ph').on('click', function() {
+        const lang = $(this).data('lang');
+        const isEnabled = $(this).data('enabled');
+        const newEnabled = !isEnabled;
+
+        // 更新 data-enabled
+        $(this).data('enabled', newEnabled);
+        $(this).attr('aria-checked', newEnabled);
+
+        // 更新开关样式
+        if (newEnabled) {
+          $(this).removeClass('bg-surface-container-high').addClass('bg-success');
+          $(this).find('span').css('transform', 'translateX(3px)');
+        } else {
+          $(this).removeClass('bg-success').addClass('bg-surface-container-high');
+          $(this).find('span').css('transform', 'translateX(3px)');
+        }
+
+        // 更新状态 badge
+        const $badge = $('#lang-badge-' + lang);
+        if (newEnabled) {
+          $badge.removeClass('bg-surface-container-high text-on-surface-variant').addClass('bg-success/15 text-success').text('启用');
+        } else {
+          $badge.removeClass('bg-success/15 text-success').addClass('bg-surface-container-high text-on-surface-variant').text('禁用');
+        }
+      });
+
+      // ========== 多语言配置 - 删除语言 ==========
+      $('#btn-delete-en, #btn-delete-vn, #btn-delete-th, #btn-delete-ph').on('click', function() {
+        const lang = $(this).data('lang');
+        if (confirm('确定要删除语言「' + lang + '」吗？')) {
+          $('#lang-row-' + lang).remove();
+          console.log('已删除语言:', lang);
+        }
+      });
+
+      // ========== 多语言配置 - 添加语言 ==========
+      $('#btn-lang-add').on('click', function() {
+        $('#lang-add-form').removeClass('hidden');
+        $(this).addClass('hidden');
+        $('#input-lang-code').val('').focus();
+        $('#input-lang-name').val('');
+      });
+
+      $('#btn-lang-add-cancel').on('click', function() {
+        $('#lang-add-form').addClass('hidden');
+        $('#btn-lang-add').removeClass('hidden');
+        $('#input-lang-code').val('');
+        $('#input-lang-name').val('');
+      });
+
+      $('#btn-lang-add-confirm').on('click', function() {
+        const code = $('#input-lang-code').val().trim();
+        const name = $('#input-lang-name').val().trim();
+        if (!code) { alert('请输入语言代码'); return; }
+        if (!name) { alert('请输入语言名称'); return; }
+
+        // 检查是否已存在
+        if ($('#lang-row-' + code).length > 0) {
+          alert('语言代码「' + code + '」已存在');
+          return;
+        }
+
+        // 生成新行
+        const rowId = 'lang-row-' + code;
+        const newRow = `
+          <div class="grid grid-cols-12 px-5 py-3.5 items-center hover:bg-surface-container/30 transition-colors" id="${rowId}">
+            <span class="col-span-2 text-sm font-mono font-medium text-on-surface" id="lang-code-${code}">${code}</span>
+            <span class="col-span-3 text-sm text-on-surface" id="lang-name-${code}">${name}</span>
+            <span class="col-span-3" id="lang-status-${code}">
+              <span class="inline-flex items-center px-2 py-0.5 rounded-sm text-xs font-medium bg-success/15 text-success" id="lang-badge-${code}">启用</span>
+            </span>
+            <span class="col-span-4 flex items-center justify-end gap-3" id="lang-actions-${code}">
+              <div class="flex items-center gap-2 text-xs text-on-surface-variant" id="lang-toggle-container-${code}">
+                <span class="text-on-surface-variant">开关</span>
+                <button class="relative inline-flex h-5 w-9 items-center rounded-full bg-success cursor-pointer transition-colors" id="lang-toggle-${code}" data-lang="${code}" data-enabled="true" role="switch" aria-checked="true">
+                  <span class="inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform translate-x-[3px]"></span>
+                </button>
+              </div>
+              <button class="text-xs text-error hover:bg-error/10 px-2 py-1 rounded-md transition-colors font-medium" id="btn-delete-${code}" data-lang="${code}">删除</button>
+            </span>
+          </div>
+        `;
+
+        $('#lang-list-body').append(newRow);
+
+        // 重置表单
+        $('#input-lang-code').val('');
+        $('#input-lang-name').val('');
+        $('#lang-add-form').addClass('hidden');
+        $('#btn-lang-add').removeClass('hidden');
+
+        // 为新添加的 toggle 绑定事件
+        $('#lang-toggle-' + code).on('click', function() {
+          const lang2 = $(this).data('lang');
+          const isEnabled2 = $(this).data('enabled');
+          const newEnabled2 = !isEnabled2;
+          $(this).data('enabled', newEnabled2);
+          $(this).attr('aria-checked', newEnabled2);
+          if (newEnabled2) {
+            $(this).removeClass('bg-surface-container-high').addClass('bg-success');
+            $(this).find('span').css('transform', 'translateX(3px)');
+          } else {
+            $(this).removeClass('bg-success').addClass('bg-surface-container-high');
+            $(this).find('span').css('transform', 'translateX(3px)');
+          }
+          const $badge2 = $('#lang-badge-' + lang2);
+          if (newEnabled2) {
+            $badge2.removeClass('bg-surface-container-high text-on-surface-variant').addClass('bg-success/15 text-success').text('启用');
+          } else {
+            $badge2.removeClass('bg-success/15 text-success').addClass('bg-surface-container-high text-on-surface-variant').text('禁用');
+          }
+        });
+
+        // 为新添加的删除按钮绑定事件
+        $('#btn-delete-' + code).on('click', function() {
+          const lang2 = $(this).data('lang');
+          if (confirm('确定要删除语言「' + lang2 + '」吗？')) {
+            $('#lang-row-' + lang2).remove();
+          }
+        });
+
+        console.log('已添加语言:', code, name);
+      });
+
+      // ========== 多语言配置 - 保存语言配置（postMessage） ==========
+      $('#btn-lang-save').on('click', function() {
+        const languages = [];
+        $('#lang-list-body > div').each(function() {
+          const $row = $(this);
+          const code = $row.find('[id^="lang-code-"]').text().trim();
+          const name = $row.find('[id^="lang-name-"]').text().trim().replace(/[ ]*默认$/, '');
+          const isDefault = $row.find('[id^="lang-name-"]').text().includes('默认');
+          const $toggle = $row.find('[id^="lang-toggle-"]');
+          const enabled = $toggle.data('enabled');
+          languages.push({ code, name, isDefault, enabled });
+        });
+
+        const payload = { languages };
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage({ type: 'lang-config-save', payload: payload }, '*');
+        } else {
+          console.log('语言配置已保存:', JSON.stringify(payload, null, 2));
+        }
+
+        // 保存成功反馈
+        const $btn = $(this);
+        const origHtml = $btn.html();
+        $btn.html('<i data-lucide="check-circle" class="w-3.5 h-3.5"></i>已保存').prop('disabled', true);
+        setTimeout(function() {
+          $btn.html(origHtml).prop('disabled', false);
+          lucide.createIcons();
+        }, 1500);
+      });
+
+    });
+  </script>
+</body>
+
+</html>
