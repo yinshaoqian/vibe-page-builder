@@ -147,7 +147,9 @@
     </aside>
 
     <!-- @main-content:start -->
-    <main class="flex-1 min-w-0 overflow-y-auto bg-background p-6">
+    <main class="flex-1 min-w-0 overflow-hidden flex bg-background">
+      <!-- ===== 左侧：编辑器 ===== -->
+      <div class="flex-1 min-w-0 overflow-y-auto p-6">
       <!-- ===== 页面标题 ===== -->
       <div class="flex items-center justify-between mb-5">
         <h1 class="text-xl font-bold text-on-surface">组件模板编辑器</h1>
@@ -478,9 +480,109 @@
   }
 }</pre>
         </div>
-      </div>
+      </div> <!-- end panel-dict -->
+      </div> <!-- end left editor -->
 
-    </main>
+      <!-- ===== 右侧：实时预览面板 ===== -->
+      <aside class="w-80 shrink-0 border-l border-outline-variant/20 bg-surface overflow-y-auto flex flex-col" id="preview-panel">
+        <!-- 预览面板头部 -->
+        <div class="shrink-0 px-4 py-3 border-b border-outline-variant/10 flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <i data-lucide="eye" class="w-4 h-4 text-primary"></i>
+            <span class="text-sm font-semibold text-on-surface">实时预览</span>
+          </div>
+          <div class="flex items-center gap-1">
+            <button id="btn-refresh-preview" class="p-1.5 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-colors" title="刷新预览">
+              <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- 预览设备切换 -->
+        <div class="shrink-0 px-4 py-2 flex items-center justify-center gap-2 border-b border-outline-variant/10">
+          <div class="flex items-center bg-surface-container rounded-md p-0.5 gap-0.5" id="preview-device-switcher">
+            <button class="px-2 py-1 rounded text-[11px] font-medium bg-surface shadow-sm text-on-surface preview-device-btn" id="preview-device-mobile" data-device="mobile">
+              <i data-lucide="smartphone" class="w-3 h-3 inline-block align-middle"></i>
+            </button>
+            <button class="px-2 py-1 rounded text-[11px] font-medium text-on-surface-variant hover:text-on-surface transition-colors preview-device-btn" id="preview-device-tablet" data-device="tablet">
+              <i data-lucide="tablet" class="w-3 h-3 inline-block align-middle"></i>
+            </button>
+            <button class="px-2 py-1 rounded text-[11px] font-medium text-on-surface-variant hover:text-on-surface transition-colors preview-device-btn" id="preview-device-desktop" data-device="desktop">
+              <i data-lucide="monitor" class="w-3 h-3 inline-block align-middle"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- 预览内容区域 -->
+        <div class="flex-1 overflow-auto p-4 flex items-start justify-center" id="preview-scroll">
+          <div class="w-full transition-all duration-300" id="preview-frame" style="max-width: 100%;">
+            <!-- ===== 组件模拟预览 ===== -->
+            <div class="bg-white rounded-lg shadow-card overflow-hidden" id="preview-component">
+              <!-- 组件头部 -->
+              <div class="px-4 py-3 flex items-center justify-between border-b border-outline-variant/10" id="preview-header">
+                <div class="flex items-center gap-2.5">
+                  <div class="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center">
+                    <i data-lucide="users" class="w-3.5 h-3.5 text-primary"></i>
+                  </div>
+                  <span class="text-sm font-semibold text-on-surface" id="preview-title">用户表格</span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                  <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-success/15 text-success">active</span>
+                </div>
+              </div>
+              <!-- 组件描述 -->
+              <div class="px-4 py-2 border-b border-outline-variant/5">
+                <p class="text-xs text-on-surface-variant" id="preview-description">展示用户信息列表，支持编辑和删除操作</p>
+              </div>
+              <!-- 组件搜索栏 -->
+              <div class="px-4 py-2.5 border-b border-outline-variant/5">
+                <div class="relative">
+                  <i data-lucide="search" class="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-on-surface-variant/40 pointer-events-none"></i>
+                  <input id="preview-search-input" type="text" placeholder="请输入搜索关键词" class="w-full bg-surface-container border-none rounded-md pl-8 pr-3 py-1.5 text-xs text-on-surface placeholder:text-on-surface-variant/40 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-colors" readonly />
+                </div>
+              </div>
+              <!-- 组件表格模拟 -->
+              <div class="px-4 py-3">
+                <div class="flex items-center justify-between py-2 border-b border-outline-variant/10">
+                  <div class="flex items-center gap-2">
+                    <div class="w-6 h-6 rounded-full bg-surface-container"></div>
+                    <div>
+                      <p class="text-xs font-medium text-on-surface" id="preview-row-name">张三</p>
+                      <p class="text-[10px] text-on-surface-variant/60">zhangsan@example.com</p>
+                    </div>
+                  </div>
+                  <span class="text-[11px] text-on-surface-variant/50">2024-01-15</span>
+                </div>
+                <div class="flex items-center justify-between py-2 border-b border-outline-variant/10">
+                  <div class="flex items-center gap-2">
+                    <div class="w-6 h-6 rounded-full bg-surface-container"></div>
+                    <div>
+                      <p class="text-xs font-medium text-on-surface" id="preview-row-name-2">李四</p>
+                      <p class="text-[10px] text-on-surface-variant/60">lisi@example.com</p>
+                    </div>
+                  </div>
+                  <span class="text-[11px] text-on-surface-variant/50">2024-02-20</span>
+                </div>
+                <div class="flex items-center justify-between py-2">
+                  <div class="flex items-center gap-2">
+                    <div class="w-6 h-6 rounded-full bg-surface-container"></div>
+                    <div>
+                      <p class="text-xs font-medium text-on-surface" id="preview-row-name-3">王五</p>
+                      <p class="text-[10px] text-on-surface-variant/60">wangwu@example.com</p>
+                    </div>
+                  </div>
+                  <span class="text-[11px] text-on-surface-variant/50">2024-03-10</span>
+                </div>
+              </div>
+              <!-- 组件按钮区域 -->
+              <div class="px-4 py-3 border-t border-outline-variant/10 flex items-center justify-end gap-2" id="preview-footer">
+                <button class="px-3 py-1.5 rounded-md text-xs font-medium bg-surface-container text-on-surface-variant hover:bg-surface-container-high transition-colors" id="preview-btn-cancel">取消</button>
+                <button class="px-3 py-1.5 rounded-md text-xs font-medium bg-primary text-on-primary hover:opacity-90 transition-all" id="preview-btn-submit">提交</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </aside>
     <!-- @main-content:end -->
   </div>
   <!-- @nav:end 导航组件 -->
@@ -512,7 +614,23 @@
         // 2. 更新多语言表格中的所有行数据
         // 3. 更新颜色调整表中的颜色变量列表和值
         // 4. 更新字典预览 JSON
+        // 5. 更新右侧预览面板中的组件名称和预览内容
         console.log('切换文件:', fileName);
+
+        // 更新预览组件标题为当前文件名
+        var displayName = fileName.replace('.vue', '');
+        // 映射显示名称
+        var nameMap = {
+          'UserTable': '用户表格',
+          'NavBar': '导航菜单',
+          'DataChart': '数据图表',
+          'LoginForm': '登录表单',
+          'SideMenu': '侧边菜单',
+          'FooterBar': '页脚栏'
+        };
+        var cnName = nameMap[displayName] || displayName;
+        $('#preview-title').text(cnName);
+        $('#preview-description').text(cnName + '组件预览 — 编辑左侧配置实时查看效果');
       });
 
       // =============================================
@@ -747,8 +865,152 @@
         return dict;
       }
 
+      // =============================================
+      // 预览面板 — 设备切换
+      // =============================================
+      $('#preview-device-switcher').on('click', '.preview-device-btn', function() {
+        $('#preview-device-switcher').find('.preview-device-btn').removeClass('bg-surface shadow-sm text-on-surface').addClass('text-on-surface-variant hover:text-on-surface');
+        $(this).removeClass('text-on-surface-variant hover:text-on-surface').addClass('bg-surface shadow-sm text-on-surface');
+
+        var device = $(this).data('device');
+        if (device === 'mobile') {
+          $('#preview-frame').css('max-width', '280px');
+        } else if (device === 'tablet') {
+          $('#preview-frame').css('max-width', '460px');
+        } else {
+          $('#preview-frame').css('max-width', '100%');
+        }
+      });
+
+      // =============================================
+      // 预览面板 — 多语言实时同步
+      // =============================================
+      // 监听 zh 语言输入变化，同步更新预览组件中的对应文本
+      $('#i18n-table-body').on('input', '.i18n-input[data-lang="zh"]', function() {
+        var row = $(this).closest('.i18n-row');
+        var key = row.data('key');
+        var val = $(this).val();
+
+        // 根据 key 名映射到预览元素
+        if (key === 'title') {
+          $('#preview-title').text(val || '用户表格');
+        } else if (key === 'description') {
+          $('#preview-description').text(val || '展示用户信息列表');
+        } else if (key === 'placeholder') {
+          $('#preview-search-input').attr('placeholder', val || '请输入搜索关键词');
+        } else if (key === 'btn_submit') {
+          $('#preview-btn-submit').text(val || '提交');
+        } else if (key === 'btn_cancel') {
+          $('#preview-btn-cancel').text(val || '取消');
+        }
+        // error_msg 不直接影响预览 UI，暂不处理
+      });
+
+      // =============================================
+      // 预览面板 — 颜色实时同步
+      // =============================================
+      // 颜色调整中的色值变化时，同步更新预览组件的对应颜色
+      // 监听色值输入变化
+      $('#color-table-body').on('input', '.color-hex-input', function() {
+        var val = $(this).val();
+        if (!/^#[0-9A-Fa-f]{6}$/.test(val)) return;
+        syncColorToPreview($(this).closest('.color-row'));
+      });
+
+      // 监听全局颜色下拉选择
+      $('#color-table-body').on('change', '.color-global-select', function() {
+        var selectedVal = $(this).val();
+        if (!selectedVal) return;
+        var row = $(this).closest('.color-row');
+        // 已由原逻辑更新色块，这里同步到预览
+        setTimeout(function() {
+          syncColorToPreview(row);
+        }, 50);
+      });
+
+      function syncColorToPreview(row) {
+        var colorName = row.data('color-name');
+        var hexVal = row.find('.color-hex-input').val();
+
+        switch (colorName) {
+          case 'primary':
+            // 更新预览中所有使用 primary 的元素
+            $('#preview-btn-submit').css('background-color', hexVal);
+            $('#preview-header .w-7.h-7').css('background-color', hexVal + '1A');
+            $('#preview-header .w-7.h-7 i').css('color', hexVal);
+            $('#preview-component .inline-flex.items-center.px-1\\.5').each(function() {
+              if ($(this).hasClass('bg-success/15')) { /* don't change success badge */ }
+            });
+            break;
+          case 'secondary':
+            // 预览中的成功色
+            $('#preview-component .inline-flex.items-center.px-1\\.5').css('background-color', hexVal + '26');
+            $('#preview-component .inline-flex.items-center.px-1\\.5').css('color', hexVal);
+            break;
+          case 'bg-card':
+            $('#preview-component').css('background-color', hexVal);
+            break;
+          case 'text-body':
+            $('#preview-title, .text-on-surface.font-medium').css('color', hexVal);
+            break;
+          case 'border-light':
+            $('#preview-component .border-b').each(function() {
+              $(this).css('border-color', hexVal + '1A');
+            });
+            break;
+        }
+      }
+
+      // =============================================
+      // 预览面板 — 刷新按钮
+      // =============================================
+      $('#btn-refresh-preview').on('click', function() {
+        // 重新读取当前所有多语言和颜色配置，刷新预览
+        // 重新设置标题、描述、按钮文本等
+        var titleVal = $('.i18n-row[data-key="title"]').find('.i18n-input[data-lang="zh"]').val();
+        if (titleVal) $('#preview-title').text(titleVal);
+
+        var descVal = $('.i18n-row[data-key="description"]').find('.i18n-input[data-lang="zh"]').val();
+        if (descVal) $('#preview-description').text(descVal);
+
+        var placeholderVal = $('.i18n-row[data-key="placeholder"]').find('.i18n-input[data-lang="zh"]').val();
+        if (placeholderVal) $('#preview-search-input').attr('placeholder', placeholderVal);
+
+        var submitVal = $('.i18n-row[data-key="btn_submit"]').find('.i18n-input[data-lang="zh"]').val();
+        if (submitVal) $('#preview-btn-submit').text(submitVal);
+
+        var cancelVal = $('.i18n-row[data-key="btn_cancel"]').find('.i18n-input[data-lang="zh"]').val();
+        if (cancelVal) $('#preview-btn-cancel').text(cancelVal);
+
+        // 同步色值
+        $('.color-row').each(function() {
+          syncColorToPreview($(this));
+        });
+
+        // 闪烁反馈
+        $('#preview-component').css('box-shadow', '0 0 0 2px rgba(47,107,255,0.3)');
+        setTimeout(function() {
+          $('#preview-component').css('box-shadow', '');
+        }, 600);
+
+        // 按钮反馈
+        var btn = $(this);
+        btn.html('<i data-lucide="check" class="w-3.5 h-3.5"></i>');
+        lucide.createIcons();
+        setTimeout(function() {
+          btn.html('<i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>');
+          lucide.createIcons();
+        }, 1000);
+      });
+
     });
   </script>
+</main>
+<!-- @main-content:end -->
+  </div>
+  <!-- @nav:end -->
+
+  <script>lucide.createIcons();</script>
 </body>
 
 </html>
