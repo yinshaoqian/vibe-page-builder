@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Inter 字体 -->
+  <link href="https://lf-code-agent.coze.cn/obj/x-ai-cn/fonts/google/google-all-fonts.css" rel="stylesheet"/>
+
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/jquery/jquery-3.7.1.min.js"></script>
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/lucide/lucide-1.11.0.min.js"></script>
+  <script src="https://lf-code-agent.coze.cn/obj/x-ai-cn/cdn/tailwindcss/tailwindcss-browser-4.2.4.min.js"></script>
+
+  <style type="text/tailwindcss">
+    @theme {
+      /* === 品牌色 === */
+      --color-primary:              #2F6BFF;
+      --color-primary-container:    #D6E3FF;
+      --color-on-primary:           #FFFFFF;
+      /* === 背景 / 表面 === */
+      --color-background:                 #F6F8FB;
+      --color-surface-container-lowest:   #FFFFFF;
+      --color-surface:                    #FFFFFF;
+      --color-surface-container:          #EEF1F6;
+      --color-surface-container-high:     #E6EAF2;
+      --color-surface-container-highest:  #DEE4EE;
+      /* === 文字 === */
+      --color-on-surface:           #152033;
+      --color-on-surface-variant:   #637089;
+      /* === 功能色 === */
+      --color-success:  #16A37B;
+      --color-error:    #E5484D;
+      --color-warning:  #F59E0B;
+      /* === 边框 === */
+      --color-outline:          #D0D6E0;
+      --color-outline-variant:  #E6EAF2;
+      /* === 圆角 === */
+      --radius-sm:   0.25rem;
+      --radius-md:   0.375rem;
+      --radius-lg:   0.5rem;
+      --radius-xl:   0.75rem;
+      --radius-2xl:  1rem;
+      --radius-full: 9999px;
+      /* === 阴影 === */
+      --shadow-card:   0 2px 8px rgba(0,0,0,0.08);
+      --shadow-float:  0 10px 25px rgba(0,0,0,0.10);
+      --shadow-dialog: 0 25px 50px rgba(0,0,0,0.15);
+      /* === 字体 === */
+      --font-sans: "Inter", "PingFang SC", system-ui, sans-serif;
+    }
+  </style>
+
+  <!-- 图片兜底 -->
+  <script>
+    document.addEventListener('error', function (e) {
+      const img = e.target;
+      if (img.tagName !== 'IMG' || img.dataset.fallback) return;
+      img.dataset.fallback = '1';
+      const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const cat = img.getAttribute('data-category') || '其他';
+      const alt = img.getAttribute('alt') || '';
+      const label = esc(alt.length > 8 ? alt.slice(0, 8) + '…' : alt);
+      const icons = { '人物': '👤', '自然风景': '🏞', '动物': '🐾', '建筑城市': '🏙', '运动体育': '⚽', '交通工具': '🚗', '食物': '🍽', '服饰时尚': '👗', '商业科技': '💼', '游戏娱乐': '🎮', '艺术': '🎨', '其他': '🖼' };
+      const icon = icons[cat] || '🖼';
+      const w = img.width || 400, h = img.height || 300;
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><rect width="100%" height="100%" fill="%23f3f4f6"/><text x="50%" y="45%" text-anchor="middle" font-size="${Math.min(w, h) * 0.18}" dominant-baseline="central">${icon}</text><text x="50%" y="68%" text-anchor="middle" font-size="${Math.min(w, h) * 0.07}" fill="%239ca3af" font-family="system-ui,sans-serif" dominant-baseline="central">${label}</text></svg>`;
+      img.src = 'data:image/svg+xml,' + svg;
+    }, true);
+  </script>
+</head>
+
+<body class="bg-background text-on-surface font-sans">
+
+  <!-- @nav:start -->
+  <!-- ===== 顶部导航栏 ===== -->
+  <header class="bg-surface border-b border-outline-variant/20 sticky top-0 z-40 h-14 flex items-center justify-between px-5">
+    <div class="flex items-center gap-3">
+      <i data-lucide="layout-dashboard" class="w-5 h-5 text-primary"></i>
+      <span class="font-semibold text-base text-on-surface">搭建器</span>
+    </div>
+    <nav class="flex items-center gap-1">
+      <a href="builder.html" class="flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium rounded-md transition-colors text-on-surface-variant hover:text-on-surface hover:bg-surface-container" id="tab-builder">
+        <i data-lucide="layers" class="w-4 h-4"></i>页面设计
+      </a>
+      <a href="theme.html" class="flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium rounded-md transition-colors text-primary bg-primary/10" id="tab-theme" aria-current="page">
+        <i data-lucide="palette" class="w-4 h-4"></i>主题配置
+      </a>
+    </nav>
+    <div class="flex items-center gap-2">
+      <span class="w-7 h-7 rounded-full bg-primary/10 text-primary text-xs font-medium flex items-center justify-center">初</span>
+    </div>
+  </header>
+
+  <div class="flex" style="height: calc(100vh - 3.5rem)">
+    <!-- ===== 左侧边栏：配置分类 ===== -->
+    <aside class="w-56 shrink-0 bg-surface border-r border-outline-variant/20 overflow-y-auto flex flex-col">
+      <div class="p-3 space-y-0.5 flex-1" id="sidebar-content">
+        <div class="text-xs text-on-surface-variant/60 font-medium px-3 py-2 uppercase tracking-wider">配置分类</div>
+        <!-- 分类-色彩 -->
+        <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-md bg-primary/10 text-primary font-medium text-sm" id="sidebar-color" data-category="color">
+          <i data-lucide="palette" class="w-4 h-4"></i>色彩
+        </a>
+        <!-- 分类-字体 -->
+        <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface font-medium text-sm transition-colors" id="sidebar-typography" data-category="typography">
+          <i data-lucide="type" class="w-4 h-4"></i>字体
+        </a>
+        <!-- 分类-间距 -->
+        <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface font-medium text-sm transition-colors" id="sidebar-spacing" data-category="spacing">
+          <i data-lucide="ruler" class="w-4 h-4"></i>间距
+        </a>
+        <!-- 分类-圆角 -->
+        <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface font-medium text-sm transition-colors" id="sidebar-radius" data-category="radius">
+          <i data-lucide="square" class="w-4 h-4"></i>圆角
+        </a>
+        <!-- 分类-阴影 -->
+        <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-md text-on-surface-variant hover:bg-surface-container hover:text-on-surface font-medium text-sm transition-colors" id="sidebar-shadow" data-category="shadow">
+          <i data-lucide="layers" class="w-4 h-4"></i>阴影
+        </a>
+      </div>
+    </aside>
+
+    <!-- @main-content:start -->
+    <main class="flex-1 min-w-0 overflow-y-auto bg-background p-6">
+      <!-- ===== 页面标题行 ===== -->
+      <div class="flex items-start justify-between mb-6">
+        <div>
+          <h1 class="text-2xl font-bold text-on-surface">主题配置</h1>
+          <p class="text-sm text-on-surface-variant mt-1">自定义应用的视觉风格，所有修改实时预览</p>
+        </div>
+        <div class="flex items-center gap-3 shrink-0">
+          <button class="bg-surface-container text-on-surface border-none px-4 py-2 rounded-md text-sm font-medium hover:bg-surface-container-high active:scale-[0.98] transition-all" id="btn-reset-all">
+            <i data-lucide="rotate-ccw" class="w-3.5 h-3.5 inline-block mr-1"></i>重置全部
+          </button>
+          <button class="bg-primary text-on-primary px-4 py-2 rounded-md text-sm font-medium hover:opacity-90 active:scale-[0.98] transition-all inline-flex items-center gap-2" id="btn-apply-theme">
+            <i data-lucide="check" class="w-3.5 h-3.5"></i>应用主题
+          </button>
+        </div>
+      </div>
+
+      <!-- ===== 两栏布局 ===== -->
+      <div class="flex gap-6">
+
+        <!-- ─── 左栏：配置表单 ─── -->
+        <div class="flex-1 min-w-0">
+
+          <!-- ===== 色彩面板 ===== -->
+          <div id="config-color" class="bg-surface rounded-lg shadow-card p-5 space-y-5">
+            <div class="flex items-center justify-between">
+              <h2 class="text-base font-semibold text-on-surface">色彩配置</h2>
+              <button class="text-xs text-primary font-medium hover:underline" id="btn-reset-color">恢复默认</button>
+            </div>
+            <!-- 品牌色 -->
+            <div class="space-y-4">
+              <div class="flex items-center gap-4">
+                <label class="w-28 text-sm font-medium text-on-surface shrink-0">品牌色</label>
+                <div class="flex items-center gap-3">
+                  <input type="color" id="input-brand-color" value="#2F6BFF" class="w-8 h-8 rounded-md border-none cursor-pointer p-0.5 bg-surface-container">
+                  <span class="text-xs text-on-surface-variant font-mono">#2F6BFF</span>
+                </div>
+              </div>
+              <!-- 背景色 -->
+              <div class="flex items-center gap-4">
+                <label class="w-28 text-sm font-medium text-on-surface shrink-0">背景色</label>
+                <div class="flex items-center gap-3">
+                  <input type="color" id="input-bg-color" value="#F6F8FB" class="w-8 h-8 rounded-md border-none cursor-pointer p-0.5 bg-surface-container">
+                  <span class="text-xs text-on-surface-variant font-mono">#F6F8FB</span>
+                </div>
+              </div>
+              <!-- 表面色 -->
+              <div class="flex items-center gap-4">
+                <label class="w-28 text-sm font-medium text-on-surface shrink-0">表面色</label>
+                <div class="flex items-center gap-3">
+                  <input type="color" id="input-surface-color" value="#FFFFFF" class="w-8 h-8 rounded-md border-none cursor-pointer p-0.5 bg-surface-container">
+                  <span class="text-xs text-on-surface-variant font-mono">#FFFFFF</span>
+                </div>
+              </div>
+              <!-- 文字色 -->
+              <div class="flex items-center gap-4">
+                <label class="w-28 text-sm font-medium text-on-surface shrink-0">文字色</label>
+                <div class="flex items-center gap-3">
+                  <input type="color" id="input-text-color" value="#152033" class="w-8 h-8 rounded-md border-none cursor-pointer p-0.5 bg-surface-container">
+                  <span class="text-xs text-on-surface-variant font-mono">#152033</span>
+                </div>
+              </div>
+              <!-- 辅助文字色 -->
+              <div class="flex items-center gap-4">
+                <label class="w-28 text-sm font-medium text-on-surface shrink-0">辅助文字色</label>
+                <div class="flex items-center gap-3">
+                  <input type="color" id="input-text-variant-color" value="#637089" class="w-8 h-8 rounded-md border-none cursor-pointer p-0.5 bg-surface-container">
+                  <span class="text-xs text-on-surface-variant font-mono">#637089</span>
+                </div>
+              </div>
+            </div>
+            <!-- 功能色分隔线 -->
+            <div class="border-t border-outline-variant/20 pt-4 space-y-4">
+              <span class="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">功能色</span>
+              <!-- 成功色 -->
+              <div class="flex items-center gap-4">
+                <label class="w-28 text-sm font-medium text-on-surface shrink-0">成功色</label>
+                <div class="flex items-center gap-3">
+                  <input type="color" id="input-success-color" value="#16A37B" class="w-8 h-8 rounded-md border-none cursor-pointer p-0.5 bg-surface-container">
+                  <span class="text-xs text-on-surface-variant font-mono">#16A37B</span>
+                </div>
+              </div>
+              <!-- 错误色 -->
+              <div class="flex items-center gap-4">
+                <label class="w-28 text-sm font-medium text-on-surface shrink-0">错误色</label>
+                <div class="flex items-center gap-3">
+                  <input type="color" id="input-error-color" value="#E5484D" class="w-8 h-8 rounded-md border-none cursor-pointer p-0.5 bg-surface-container">
+                  <span class="text-xs text-on-surface-variant font-mono">#E5484D</span>
+                </div>
+              </div>
+              <!-- 警告色 -->
+              <div class="flex items-center gap-4">
+                <label class="w-28 text-sm font-medium text-on-surface shrink-0">警告色</label>
+                <div class="flex items-center gap-3">
+                  <input type="color" id="input-warning-color" value="#F59E0B" class="w-8 h-8 rounded-md border-none cursor-pointer p-0.5 bg-surface-container">
+                  <span class="text-xs text-on-surface-variant font-mono">#F59E0B</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ===== 字体面板 ===== -->
+          <div id="config-typography" class="bg-surface rounded-lg shadow-card p-5 space-y-5 hidden">
+            <div class="flex items-center justify-between">
+              <h2 class="text-base font-semibold text-on-surface">字体配置</h2>
+              <button class="text-xs text-primary font-medium hover:underline" id="btn-reset-typography">恢复默认</button>
+            </div>
+            <!-- 正文字体 -->
+            <div class="space-y-4">
+              <div class="flex items-center gap-4">
+                <label class="w-28 text-sm font-medium text-on-surface shrink-0">正文字体</label>
+                <select class="flex-1 bg-surface-container border-none rounded-md px-3 py-2 text-sm text-on-surface focus:ring-2 focus:ring-primary/30 transition-colors" id="select-body-font">
+                  <!-- 下拉选项-字体1 -->
+                  <option value="Inter" selected>Inter</option>
+                  <!-- 下拉选项-字体2 -->
+                  <option value="Noto Sans SC">Noto Sans SC</option>
+                  <!-- 下拉选项-字体3 -->
+                  <option value="system-ui">system-ui</option>
+                  <!-- 下拉选项-字体4 -->
+                  <option value="Georgia">Georgia</option>
+                </select>
+              </div>
+              <!-- 标题字体 -->
+              <div class="flex items-center gap-4">
+                <label class="w-28 text-sm font-medium text-on-surface shrink-0">标题字体</label>
+                <select class="flex-1 bg-surface-container border-none rounded-md px-3 py-2 text-sm text-on-surface focus:ring-2 focus:ring-primary/30 transition-colors" id="select-heading-font">
+                  <!-- 下拉选项-标题字体1 -->
+                  <option value="Inter" selected>Inter</option>
+                  <!-- 下拉选项-标题字体2 -->
+                  <option value="Noto Sans SC">Noto Sans SC</option>
+                  <!-- 下拉选项-标题字体3 -->
+                  <option value="system-ui">system-ui</option>
+                  <!-- 下拉选项-标题字体4 -->
+                  <option value="Georgia">Georgia</option>
+                </select>
+              </div>
+            </div>
+            <!-- 字号层级 -->
+            <div class="border-t border-outline-variant/20 pt-4 space-y-4">
+              <span class="text-xs font-semibold text-on-surface-variant uppercase tracking-wider">字号层级</span>
+              <!-- 标题字号 -->
+              <div class="flex items-center gap-4">
+                <label class="w-28 text-sm font-medium text-on-surface shrink-0">标题字号</label>
+                <div class="flex-1 flex items-center gap-3">
+                  <input type="range" id="range-heading-size" min="18" max="36" value="24" class="flex-1 accent-primary h-1.5 cursor-pointer">
+                  <span class="text-xs text-on-surface-variant font-mono w-8 text-right" id="label-heading-size">24px</span>
+                </div>
+              </div>
+              <!-- 正文字号 -->
+              <div class="flex items-center gap-4">
+                <label class="w-28 text-sm font-medium text-on-surface shrink-0">正文字号</label>
+                <div class="flex-1 flex items-center gap-3">
+                  <input type="range" id="range-body-size" min="12" max="20" value="14" class="flex-1 accent-primary h-1.5 cursor-pointer">
+                  <span class="text-xs text-on-surface-variant font-mono w-8 text-right" id="label-body-size">14px</span>
+                </div>
+              </div>
+              <!-- 小字号 -->
+              <div class="flex items-center gap-4">
+                <label class="w-28 text-sm font-medium text-on-surface shrink-0">小字号</label>
+                <div class="flex-1 flex items-center gap-3">
+                  <input type="range" id="range-small-size" min="10" max="16" value="12" class="flex-1 accent-primary h-1.5 cursor-pointer">
+                  <span class="text-xs text-on-surface-variant font-mono w-8 text-right" id="label-small-size">12px</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ===== 间距面板 ===== -->
+          <div id="config-spacing" class="bg-surface rounded-lg shadow-card p-5 space-y-5 hidden">
+            <div class="flex items-center justify-between">
+              <h2 class="text-base font-semibold text-on-surface">间距配置</h2>
+              <button class="text-xs text-primary font-medium hover:underline" id="btn-reset-spacing">恢复默认</button>
+            </div>
+            <!-- 内边距 -->
+            <div class="space-y-4">
+              <div class="flex items-center gap-4">
+                <label class="w-28 text-sm font-medium text-on-surface shrink-0">卡片内边距</label>
+                <div class="flex-1 flex items-center gap-3">
+                  <input type="range" id="range-card-padding" min="8" max="40" value="20" class="flex-1 accent-primary h-1.5 cursor-pointer">
+                  <span class="text-xs text-on-surface-variant font-mono w-10 text-right" id="label-card-padding">20px</span>
+                </div>
+              </div>
+              <!-- 外边距 -->
+              <div class="flex items-center gap-4">
+                <label class="w-28 text-sm font-medium text-on-surface shrink-0">区块间距</label>
+                <div class="flex-1 flex items-center gap-3">
+                  <input type="range" id="range-block-gap" min="12" max="60" value="32" class="flex-1 accent-primary h-1.5 cursor-pointer">
+                  <span class="text-xs text-on-surface-variant font-mono w-10 text-right" id="label-block-gap">32px</span>
+                </div>
+              </div>
+              <!-- 间距比例 -->
+              <div class="flex items-center gap-4">
+                <label class="w-28 text-sm font-medium text-on-surface shrink-0">间距比例</label>
+                <select class="flex-1 bg-surface-container border-none rounded-md px-3 py-2 text-sm text-on-surface focus:ring-2 focus:ring-primary/30 transition-colors" id="select-spacing-ratio">
+                  <!-- 下拉选项-比例1 -->
+                  <option value="1.5">宽松 (1.5x)</option>
+                  <!-- 下拉选项-比例2 -->
+                  <option value="1" selected>标准 (1x)</option>
+                  <!-- 下拉选项-比例3 -->
+                  <option value="0.75">紧凑 (0.75x)</option>
+                  <!-- 下拉选项-比例4 -->
+                  <option value="0.5">紧密 (0.5x)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- ===== 圆角面板 ===== -->
+          <div id="config-radius" class="bg-surface rounded-lg shadow-card p-5 space-y-5 hidden">
+            <div class="flex items-center justify-between">
+              <h2 class="text-base font-semibold text-on-surface">圆角配置</h2>
+              <button class="text-xs text-primary font-medium hover:underline" id="btn-reset-radius">恢复默认</button>
+            </div>
+            <div class="space-y-4">
+              <!-- 小圆角 -->
+              <div class="flex items-center gap-4">
+                <label class="w-28 text-sm font-medium text-on-surface shrink-0">小圆角</label>
+                <div class="flex-1 flex items-center gap-3">
+                  <input type="range" id="range-radius-sm" min="0" max="8" value="4" class="flex-1 accent-primary h-1.5 cursor-pointer">
+                  <span class="text-xs text-on-surface-variant font-mono w-8 text-right" id="label-radius-sm">4px</span>
+                </div>
+                <div class="w-8 h-8 bg-surface-container-high rounded-sm flex items-center justify-center">
+                  <span class="text-xs text-on-surface-variant/40">S</span>
+                </div>
+              </div>
+              <!-- 中圆角 -->
+              <div class="flex items-center gap-4">
+                <label class="w-28 text-sm font-medium text-on-surface shrink-0">中圆角</label>
+                <div class="flex-1 flex items-center gap-3">
+                  <input type="range" id="range-radius-md" min="0" max="16" value="6" class="flex-1 accent-primary h-1.5 cursor-pointer">
+                  <span class="text-xs text-on-surface-variant font-mono w-8 text-right" id="label-radius-md">6px</span>
+                </div>
+                <div class="w-8 h-8 bg-surface-container-high rounded flex items-center justify-center">
+                  <span class="text-xs text-on-surface-variant/40">M</span>
+                </div>
+              </div>
+              <!-- 大圆角 -->
+              <div class="flex items-center gap-4">
+                <label class="w-28 text-sm font-medium text-on-surface shrink-0">大圆角</label>
+                <div class="flex-1 flex items-center gap-3">
+                  <input type="range" id="range-radius-lg" min="0" max="24" value="12" class="flex-1 accent-primary h-1.5 cursor-pointer">
+                  <span class="text-xs text-on-surface-variant font-mono w-8 text-right" id="label-radius-lg">12px</span>
+                </div>
+                <div class="w-8 h-8 bg-surface-container-high rounded-lg flex items-center justify-center">
+                  <span class="text-xs text-on-surface-variant/40">L</span>
+                </div>
+              </div>
+              <!-- 全圆角 -->
+              <div class="flex items-center gap-4">
+                <label class="w-28 text-sm font-medium text-on-surface shrink-0">全圆角</label>
+                <div class="flex-1 flex items-center gap-3">
+                  <input type="range" id="range-radius-full" min="8" max="40" value="20" class="flex-1 accent-primary h-1.5 cursor-pointer">
+                  <span class="text-xs text-on-surface-variant font-mono w-8 text-right" id="label-radius-full">20px</span>
+                </div>
+                <div class="w-8 h-8 bg-surface-container-high rounded-full flex items-center justify-center">
+                  <span class="text-xs text-on-surface-variant/40">∞</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ===== 阴影面板 ===== -->
+          <div id="config-shadow" class="bg-surface rounded-lg shadow-card p-5 space-y-5 hidden">
+            <div class="flex items-center justify-between">
+              <h2 class="text-base font-semibold text-on-surface">阴影配置</h2>
+              <button class="text-xs text-primary font-medium hover:underline" id="btn-reset-shadow">恢复默认</button>
+            </div>
+            <div class="space-y-4">
+              <!-- 卡片阴影 -->
+              <div class="flex items-center gap-4">
+                <label class="w-28 text-sm font-medium text-on-surface shrink-0">卡片阴影</label>
+                <div class="flex-1 flex items-center gap-3">
+                  <input type="range" id="range-shadow-card" min="0" max="24" value="8" class="flex-1 accent-primary h-1.5 cursor-pointer">
+                  <span class="text-xs text-on-surface-variant font-mono w-10 text-right" id="label-shadow-card">8px</span>
+                </div>
+                <div class="w-10 h-10 bg-surface rounded shadow-card flex items-center justify-center">
+                  <i data-lucide="credit-card" class="w-4 h-4 text-on-surface-variant/50"></i>
+                </div>
+              </div>
+              <!-- 浮动阴影 -->
+              <div class="flex items-center gap-4">
+                <label class="w-28 text-sm font-medium text-on-surface shrink-0">浮动阴影</label>
+                <div class="flex-1 flex items-center gap-3">
+                  <input type="range" id="range-shadow-float" min="0" max="40" value="25" class="flex-1 accent-primary h-1.5 cursor-pointer">
+                  <span class="text-xs text-on-surface-variant font-mono w-10 text-right" id="label-shadow-float">25px</span>
+                </div>
+                <div class="w-10 h-10 bg-surface rounded shadow-float flex items-center justify-center">
+                  <i data-lucide="panel-top" class="w-4 h-4 text-on-surface-variant/50"></i>
+                </div>
+              </div>
+              <!-- 弹窗阴影 -->
+              <div class="flex items-center gap-4">
+                <label class="w-28 text-sm font-medium text-on-surface shrink-0">弹窗阴影</label>
+                <div class="flex-1 flex items-center gap-3">
+                  <input type="range" id="range-shadow-dialog" min="0" max="60" value="50" class="flex-1 accent-primary h-1.5 cursor-pointer">
+                  <span class="text-xs text-on-surface-variant font-mono w-10 text-right" id="label-shadow-dialog">50px</span>
+                </div>
+                <div class="w-10 h-10 bg-surface rounded shadow-dialog flex items-center justify-center">
+                  <i data-lucide="columns" class="w-4 h-4 text-on-surface-variant/50"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ─── 右栏：实时预览 ─── -->
+        <div class="w-80 shrink-0">
+          <div class="bg-surface rounded-lg shadow-card p-5 sticky top-6 space-y-4">
+            <div class="flex items-center gap-2">
+              <i data-lucide="eye" class="w-4 h-4 text-primary"></i>
+              <h3 class="text-sm font-semibold text-on-surface">实时预览</h3>
+            </div>
+            <div class="text-xs text-on-surface-variant/60" id="preview-label">当前配置效果示意</div>
+
+            <!-- 预览卡片 -->
+            <div id="preview-card" class="border border-outline-variant/10 overflow-hidden" style="background: #FFFFFF; transition: all 0.2s ease;">
+              <!-- 预览卡片头部 -->
+              <div id="preview-header" class="flex items-center gap-3" style="padding: 16px;">
+                <div id="preview-avatar" class="w-10 h-10 flex items-center justify-center text-white text-sm font-bold shrink-0" style="background: #2F6BFF;">
+                  C
+                </div>
+                <div class="min-w-0">
+                  <div id="preview-title" class="font-semibold truncate" style="font-size: 14px; color: #152033;">CloudBoard Pro</div>
+                  <div id="preview-subtitle" class="text-xs truncate" style="color: #637089;">企业级云服务平台</div>
+                </div>
+              </div>
+              <!-- 预览标签 -->
+              <div id="preview-tags" class="flex gap-2" style="padding: 0 16px 12px;">
+                <span id="preview-tag-1" class="text-xs px-2 py-0.5 font-medium" style="background: #D6E3FF; color: #2F6BFF;">SaaS</span>
+                <span id="preview-tag-2" class="text-xs px-2 py-0.5 font-medium bg-success/15 text-success">运行中</span>
+              </div>
+              <!-- 预览描述 -->
+              <p id="preview-desc" class="text-sm" style="padding: 0 16px 16px; color: #152033;">高性能云原生基础设施，支持弹性伸缩与多区域部署，保障服务高可用性。</p>
+              <!-- 预览操作栏 -->
+              <div id="preview-actions" class="flex gap-2" style="padding: 0 16px 16px;">
+                <button id="preview-btn-primary" class="text-sm px-4 py-1.5 font-medium text-white" style="background: #2F6BFF;">立即使用</button>
+                <button id="preview-btn-secondary" class="text-sm px-4 py-1.5 font-medium" style="border: 1px solid #D0D6E0; color: #637089;">了解详情</button>
+              </div>
+            </div>
+
+            <div class="text-xs text-on-surface-variant/40 text-center pt-2 border-t border-outline-variant/10">
+              调整左侧参数，预览实时更新
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+    <!-- @main-content:end -->
+  </div>
+  <!-- @nav:end -->
+
+  <script>lucide.createIcons();</script>
+
+  <script>
+    $(function() {
+
+      // ==================================================================
+      // 1. 侧边栏分类切换
+      // ==================================================================
+      var currentCategory = 'color';
+
+      function switchCategory(category) {
+        // 隐藏所有面板
+        $('#config-color, #config-typography, #config-spacing, #config-radius, #config-shadow').addClass('hidden');
+        // 显示对应面板
+        $('#config-' + category).removeClass('hidden');
+        // 侧边栏激活态
+        $('#sidebar-color, #sidebar-typography, #sidebar-spacing, #sidebar-radius, #sidebar-shadow')
+          .removeClass('bg-primary/10 text-primary')
+          .addClass('text-on-surface-variant hover:bg-surface-container hover:text-on-surface');
+        $('#sidebar-' + category)
+          .removeClass('text-on-surface-variant hover:bg-surface-container hover:text-on-surface')
+          .addClass('bg-primary/10 text-primary');
+        currentCategory = category;
+        // 更新预览区提示
+        var labels = {
+          color: '色彩效果预览',
+          typography: '字体效果预览',
+          spacing: '间距效果预览',
+          radius: '圆角效果预览',
+          shadow: '阴影效果预览'
+        };
+        $('#preview-label').text(labels[category] || '当前配置效果示意');
+      }
+
+      $('#sidebar-color').on('click', function(e) { e.preventDefault(); switchCategory('color'); });
+      $('#sidebar-typography').on('click', function(e) { e.preventDefault(); switchCategory('typography'); });
+      $('#sidebar-spacing').on('click', function(e) { e.preventDefault(); switchCategory('spacing'); });
+      $('#sidebar-radius').on('click', function(e) { e.preventDefault(); switchCategory('radius'); });
+      $('#sidebar-shadow').on('click', function(e) { e.preventDefault(); switchCategory('shadow'); });
+
+      // ==================================================================
+      // 2. 色彩面板 - 同步预览 & 更新色值显示
+      // ==================================================================
+      function updateColorPreview() {
+        var brand = $('#input-brand-color').val();
+        var bg = $('#input-bg-color').val();
+        var surface = $('#input-surface-color').val();
+        var text = $('#input-text-color').val();
+        var textVar = $('#input-text-variant-color').val();
+        var success = $('#input-success-color').val();
+        var error = $('#input-error-color').val();
+        var warning = $('#input-warning-color').val();
+
+        // 更新预览卡片
+        $('#preview-card').css('background', surface);
+        $('#preview-title').css('color', text);
+        $('#preview-subtitle').css('color', textVar);
+        $('#preview-desc').css('color', text);
+        $('#preview-avatar').css('background', brand);
+        $('#preview-tag-1').css({
+          'background': brand + '22',
+          'color': brand
+        });
+        $('#preview-btn-primary').css('background', brand);
+        $('#preview-btn-secondary').css({
+          'border-color': '#D0D6E0',
+          'color': textVar
+        });
+
+        // 同步显示色值
+        $('#input-brand-color').next('span').text(brand);
+        $('#input-bg-color').next('span').text(bg);
+        $('#input-surface-color').next('span').text(surface);
+        $('#input-text-color').next('span').text(text);
+        $('#input-text-variant-color').next('span').text(textVar);
+        $('#input-success-color').next('span').text(success);
+        $('#input-error-color').next('span').text(error);
+        $('#input-warning-color').next('span').text(warning);
+      }
+
+      // 所有颜色选择器 change 事件
+      $('#input-brand-color, #input-bg-color, #input-surface-color, #input-text-color, #input-text-variant-color, #input-success-color, #input-error-color, #input-warning-color')
+        .on('change', function() {
+          updateColorPreview();
+        });
+
+      // ==================================================================
+      // 3. 字体面板 - 同步预览
+      // ==================================================================
+      function updateTypographyPreview() {
+        var headingSize = $('#range-heading-size').val();
+        var bodySize = $('#range-body-size').val();
+        var smallSize = $('#range-small-size').val();
+        var bodyFont = $('#select-body-font').val();
+        var headingFont = $('#select-heading-font').val();
+
+        $('#label-heading-size').text(headingSize + 'px');
+        $('#label-body-size').text(bodySize + 'px');
+        $('#label-small-size').text(smallSize + 'px');
+
+        $('#preview-title').css({
+          'font-size': headingSize + 'px',
+          'font-family': headingFont
+        });
+        $('#preview-subtitle').css('font-size', smallSize + 'px');
+        $('#preview-desc').css({
+          'font-size': bodySize + 'px',
+          'font-family': bodyFont
+        });
+        $('#preview-tag-1, #preview-tag-2').css('font-size', smallSize + 'px');
+        $('#preview-btn-primary, #preview-btn-secondary').css('font-size', bodySize + 'px');
+      }
+
+      $('#range-heading-size, #range-body-size, #range-small-size').on('input', function() {
+        updateTypographyPreview();
+      });
+      $('#select-body-font, #select-heading-font').on('change', function() {
+        updateTypographyPreview();
+      });
+
+      // ==================================================================
+      // 4. 间距面板 - 同步预览
+      // ==================================================================
+      function updateSpacingPreview() {
+        var padding = $('#range-card-padding').val();
+        var gap = $('#range-block-gap').val();
+        $('#label-card-padding').text(padding + 'px');
+        $('#label-block-gap').text(gap + 'px');
+
+        // 预览卡片各区域的间距
+        $('#preview-header').css('padding', padding + 'px ' + padding + 'px 0');
+        $('#preview-tags').css('padding', '0 ' + padding + 'px ' + Math.round(padding * 0.75) + 'px');
+        $('#preview-desc').css('padding', '0 ' + padding + 'px ' + Math.round(padding * 0.75) + 'px');
+        $('#preview-actions').css('padding', '0 ' + padding + 'px ' + padding + 'px');
+        $('#preview-tags').css('gap', Math.round(gap * 0.3) + 'px');
+        $('#preview-actions').css('gap', Math.round(gap * 0.3) + 'px');
+      }
+
+      $('#range-card-padding, #range-block-gap').on('input', function() {
+        updateSpacingPreview();
+      });
+
+      // ==================================================================
+      // 5. 圆角面板 - 同步预览
+      // ==================================================================
+      function updateRadiusPreview() {
+        var sm = $('#range-radius-sm').val();
+        var md = $('#range-radius-md').val();
+        var lg = $('#range-radius-lg').val();
+        var full = $('#range-radius-full').val();
+        $('#label-radius-sm').text(sm + 'px');
+        $('#label-radius-md').text(md + 'px');
+        $('#label-radius-lg').text(lg + 'px');
+        $('#label-radius-full').text(full + 'px');
+
+        $('#preview-card').css('border-radius', lg + 'px');
+        $('#preview-avatar').css('border-radius', md + 'px');
+        $('#preview-btn-primary').css('border-radius', sm + 'px');
+        $('#preview-btn-secondary').css('border-radius', sm + 'px');
+        $('#preview-tag-1, #preview-tag-2').css('border-radius', sm + 'px');
+      }
+
+      $('#range-radius-sm, #range-radius-md, #range-radius-lg, #range-radius-full').on('input', function() {
+        updateRadiusPreview();
+      });
+
+      // ==================================================================
+      // 6. 阴影面板 - 同步预览
+      // ==================================================================
+      function updateShadowPreview() {
+        var cardBlur = $('#range-shadow-card').val();
+        var floatBlur = $('#range-shadow-float').val();
+        var dialogBlur = $('#range-shadow-dialog').val();
+        $('#label-shadow-card').text(cardBlur + 'px');
+        $('#label-shadow-float').text(floatBlur + 'px');
+        $('#label-shadow-dialog').text(dialogBlur + 'px');
+
+        var cardShadow = '0 2px ' + cardBlur + 'px rgba(0,0,0,0.08)';
+        $('#preview-card').css('box-shadow', cardShadow);
+      }
+
+      $('#range-shadow-card, #range-shadow-float, #range-shadow-dialog').on('input', function() {
+        updateShadowPreview();
+      });
+
+      // ==================================================================
+      // 7. 各个分类的「恢复默认」
+      // ==================================================================
+      // 色彩默认
+      $('#btn-reset-color').on('click', function() {
+        $('#input-brand-color').val('#2F6BFF').trigger('change');
+        $('#input-bg-color').val('#F6F8FB').trigger('change');
+        $('#input-surface-color').val('#FFFFFF').trigger('change');
+        $('#input-text-color').val('#152033').trigger('change');
+        $('#input-text-variant-color').val('#637089').trigger('change');
+        $('#input-success-color').val('#16A37B').trigger('change');
+        $('#input-error-color').val('#E5484D').trigger('change');
+        $('#input-warning-color').val('#F59E0B').trigger('change');
+      });
+
+      // 字体默认
+      $('#btn-reset-typography').on('click', function() {
+        $('#select-body-font').val('Inter').trigger('change');
+        $('#select-heading-font').val('Inter').trigger('change');
+        $('#range-heading-size').val(24).trigger('input');
+        $('#range-body-size').val(14).trigger('input');
+        $('#range-small-size').val(12).trigger('input');
+      });
+
+      // 间距默认
+      $('#btn-reset-spacing').on('click', function() {
+        $('#range-card-padding').val(20).trigger('input');
+        $('#range-block-gap').val(32).trigger('input');
+        $('#select-spacing-ratio').val('1').trigger('change');
+      });
+
+      // 圆角默认
+      $('#btn-reset-radius').on('click', function() {
+        $('#range-radius-sm').val(4).trigger('input');
+        $('#range-radius-md').val(6).trigger('input');
+        $('#range-radius-lg').val(12).trigger('input');
+        $('#range-radius-full').val(20).trigger('input');
+      });
+
+      // 阴影默认
+      $('#btn-reset-shadow').on('click', function() {
+        $('#range-shadow-card').val(8).trigger('input');
+        $('#range-shadow-float').val(25).trigger('input');
+        $('#range-shadow-dialog').val(50).trigger('input');
+      });
+
+      // ==================================================================
+      // 8. 「重置全部」按钮
+      // ==================================================================
+      $('#btn-reset-all').on('click', function() {
+        $('#btn-reset-color').trigger('click');
+        $('#btn-reset-typography').trigger('click');
+        $('#btn-reset-spacing').trigger('click');
+        $('#btn-reset-radius').trigger('click');
+        $('#btn-reset-shadow').trigger('click');
+      });
+
+      // ==================================================================
+      // 9. 「应用主题」按钮 - 模拟 postMessage
+      // ==================================================================
+      $('#btn-apply-theme').on('click', function() {
+        var themeData = {
+          colors: {
+            brand: $('#input-brand-color').val(),
+            background: $('#input-bg-color').val(),
+            surface: $('#input-surface-color').val(),
+            text: $('#input-text-color').val(),
+            textVariant: $('#input-text-variant-color').val(),
+            success: $('#input-success-color').val(),
+            error: $('#input-error-color').val(),
+            warning: $('#input-warning-color').val()
+          },
+          typography: {
+            bodyFont: $('#select-body-font').val(),
+            headingFont: $('#select-heading-font').val(),
+            headingSize: parseInt($('#range-heading-size').val()),
+            bodySize: parseInt($('#range-body-size').val()),
+            smallSize: parseInt($('#range-small-size').val())
+          },
+          spacing: {
+            cardPadding: parseInt($('#range-card-padding').val()),
+            blockGap: parseInt($('#range-block-gap').val()),
+            ratio: parseFloat($('#select-spacing-ratio').val())
+          },
+          radius: {
+            sm: parseInt($('#range-radius-sm').val()),
+            md: parseInt($('#range-radius-md').val()),
+            lg: parseInt($('#range-radius-lg').val()),
+            full: parseInt($('#range-radius-full').val())
+          },
+          shadow: {
+            card: parseInt($('#range-shadow-card').val()),
+            float: parseInt($('#range-shadow-float').val()),
+            dialog: parseInt($('#range-shadow-dialog').val())
+          }
+        };
+
+        console.log('[postMessage] 发送主题配置:', JSON.stringify(themeData, null, 2));
+
+        // 模拟 postMessage 传出
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage({
+            type: 'theme:apply',
+            payload: themeData
+          }, '*');
+        }
+
+        // 按钮反馈
+        var $btn = $('#btn-apply-theme');
+        var originalText = $btn.html();
+        $btn.html('<i data-lucide="check" class="w-3.5 h-3.5"></i>已应用');
+        setTimeout(function() {
+          $btn.html(originalText);
+          lucide.createIcons();
+        }, 2000);
+      });
+
+      // ==================================================================
+      // 10. 初始化预览
+      // ==================================================================
+      updateColorPreview();
+      updateTypographyPreview();
+      updateSpacingPreview();
+      updateRadiusPreview();
+      updateShadowPreview();
+
+    });
+  </script>
+
+</body>
+</html>

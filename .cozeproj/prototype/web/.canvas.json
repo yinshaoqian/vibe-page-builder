@@ -1,0 +1,20 @@
+{
+  "elements": [
+    {
+      "type": "html",
+      "options": {
+        "path": ".cozeproj/prototype/web/builder.html"
+      },
+      "title": "页面设计器",
+      "size": "web"
+    },
+    {
+      "type": "html",
+      "options": {
+        "path": ".cozeproj/prototype/web/theme.html"
+      },
+      "title": "主题配置",
+      "size": "web"
+    }
+  ]
+}
