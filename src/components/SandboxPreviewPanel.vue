@@ -291,16 +291,52 @@ function createSimpleDemo(name: string): any {
   }
 }
 
+/** 解析 .vue SFC 代码，提取 template + script 合并为组件定义 */
+function parseSFC(code: string): Record<string, any> | null {
+  // 提取 <template> 内容
+  const templateMatch = code.match(/<template[^>]*>([\s\S]*?)<\/template>/)
+  const template = templateMatch ? templateMatch[1].trim() : ''
+
+  // 如果是纯 Options API 对象（无 template 标签），直接 eval
+  if (!template && !code.includes('<template>')) {
+    const obj = new Function('return ' + code)()
+    return typeof obj === 'object' ? obj : null
+  }
+
+  // 提取 <script> 内容
+  const scriptMatch = code.match(/<script[^>]*>([\s\S]*?)<\/script>/)
+  if (!scriptMatch) {
+    // 有 template 但无 script → 创建一个只有 template 的组件
+    return { template }
+  }
+
+  const script = scriptMatch[1].trim()
+
+  // 将 `export default` 替换为 `return`，所有辅助函数保留在函数作用域中
+  // function getNumberLocale() {} 等函数声明会被 hoist
+  const wrappedCode = script.replace(/export\s+default\s*/, 'return ')
+
+  const component = new Function(wrappedCode)()
+  if (typeof component !== 'object') return null
+
+  // 合并 template（优先取 <template> 标签中的内容）
+  if (template) {
+    component.template = template
+  }
+
+  return component
+}
+
 function previewPastedCode() {
   if (!pastedCode.value.trim()) return
   try {
-    // 尝试 eval 用户粘贴的 Options API 组件代码
-    // ⚠️ 沙箱环境中仅用于预览，生产环境需更安全的手段
-    const ComponentClass = new Function('return ' + pastedCode.value)()
-    if (typeof ComponentClass === 'function' || typeof ComponentClass === 'object') {
-      currentComponentDef.value = ComponentClass
+    const componentDef = parseSFC(pastedCode.value)
+    if (componentDef) {
+      currentComponentDef.value = componentDef as any
       selectedDemo.value = ''
       showLoadDialog.value = false
+    } else {
+      alert('无法解析组件代码，请确保包含 export default { ... }')
     }
   } catch (e: any) {
     alert('组件代码解析失败：' + (e.message || String(e)))
