@@ -29,7 +29,8 @@
 
 <script setup lang="ts">
 import { ref, watch, onUnmounted, nextTick } from 'vue'
-import { createApp } from 'vue'
+// @ts-ignore - 全量构建包含模板编译器
+import { createApp } from 'vue/dist/vue.esm-bundler'
 
 const props = defineProps<{
   /** Vue 组件选项对象（Options API 或组件选项） */
