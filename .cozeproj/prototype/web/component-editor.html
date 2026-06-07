@@ -195,6 +195,9 @@
         <h1 class="text-xl font-bold text-on-surface">组件模板编辑器</h1>
         <div class="flex items-center gap-2">
           <span class="text-xs text-on-surface-variant/60 bg-surface-container px-2.5 py-1 rounded-md" id="editing-file-indicator">当前编辑：UserTable.vue</span>
+          <button id="btn-export-vue" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-md text-xs font-medium bg-primary text-on-primary hover:opacity-90 active:scale-[0.98] transition-all shadow-sm">
+            <i data-lucide="download" class="w-3.5 h-3.5"></i>导出组件
+          </button>
         </div>
       </div>
 
@@ -737,6 +740,222 @@
         var cnName = nameMap[displayName] || displayName;
         $('#preview-title').text(cnName);
         $('#preview-description').text(cnName + '组件预览 — 编辑左侧配置实时查看效果');
+      });
+
+      // ===== 导出组件功能 =====
+      function generateVueCode() {
+        // 1. 读取 i18n 数据
+        var langs = ['zh','en','vn','th','ph'];
+        var langNames = {zh:'中文',en:'English',vn:'Tiáº¿ng Viá»‡t',th:'à¹„à¸—à¸¢',ph:'Filipino'};
+        var i18nData = {};
+        for (var l = 0; l < langs.length; l++) {
+          i18nData[langs[l]] = {};
+        }
+        $('#i18n-table-body .i18n-row').each(function() {
+          var key = $(this).attr('data-key');
+          for (var l = 0; l < langs.length; l++) {
+            var lang = langs[l];
+            i18nData[lang][key] = $(this).attr('data-' + lang) || '';
+          }
+        });
+
+        // 2. 读取绑定数据
+        var bindExport = [];
+        for (var b = 0; b < bindings.length; b++) {
+          bindExport.push({
+            elId: bindings[b].elId,
+            eventType: bindings[b].eventType,
+            eventName: bindings[b].eventName
+          });
+        }
+
+        // 3. 读取 EventBus 名称
+        var eventBusName = $('#eventbus-name').val() || 'component-event';
+
+        // 4. 预设主题色
+        var themeColors = {
+          primary: '#2F6BFF',
+          secondary: '#16A37B',
+          text: '#152033',
+          accent1: '#F59E0B',
+          accent2: '#8B5CF6',
+          accent3: '#E5484D',
+          accent4: '#637089'
+        };
+
+        // 5. 获取当前组件名
+        var compName = $('#editing-file-indicator').text().replace('å½“å‰ç¼–è¾‘ï¼š','').replace('.vue','').trim() || 'GeneratedComponent';
+
+        // 6. 生成 Template
+        var templateLines = [];
+        templateLines.push('<' + 'template>');
+        templateLines.push('  <div class="' + compName.toLowerCase() + '-wrapper" :style="themeVars">');
+
+        // 从预览区获取结构 - 简化版，生成主要结构
+        templateLines.push('    <!-- Header -->');
+        templateLines.push('    <div class="header">');
+        templateLines.push('      <div class="header-left">');
+        templateLines.push('        <span class="icon">â˜ </span>');
+        templateLines.push('        <div>');
+        templateLines.push('          <h3>{{ $t(\'title\') }}</h3>');
+        templateLines.push('          <p class="desc">{{ $t(\'description\') }}</p>');
+        templateLines.push('        </div>');
+        templateLines.push('      </div>');
+        templateLines.push('      <div class="header-actions">');
+        templateLines.push('        <button class="btn-primary" @click="handleEventBus(\'header-actions\', \'click\')">{{ $t(\'btn_submit\') }}</button>');
+        templateLines.push('        <button class="btn-ghost">{{ $t(\'btn_cancel\') }}</button>');
+        templateLines.push('      </div>');
+        templateLines.push('    </div>');
+
+        // ä¸ºç»‘å®šçš„å…ƒç´ ç”Ÿæˆ @click/@dblclick
+        templateLines.push('    <!-- Body -->');
+        templateLines.push('    <div class="content-grid">');
+        templateLines.push('      <div class="card" v-for="item in 3" :key="item"');
+        // æ£€æŸ¥æ­¤å…ƒç´ æ˜¯å¦æœ‰ç»‘å®š
+        var cardHasBinding = false;
+        for (var b = 0; b < bindExport.length; b++) {
+          if (bindExport[b].elId === 'card') { cardHasBinding = true; break; }
+        }
+        if (cardHasBinding) {
+          templateLines.push('        @click="handleEventBus(\'card\', \'click\')"');
+        }
+        templateLines.push('      >');
+        templateLines.push('        <div class="card-icon"></div>');
+        templateLines.push('        <div class="card-title">{{ $t(\'placeholder\') }}</div>');
+        templateLines.push('        <div class="card-value">$ 12,345</div>');
+        templateLines.push('      </div>');
+        templateLines.push('    </div>');
+
+        templateLines.push('  <' + '/div>');
+        templateLines.push('<' + '/template>');
+        var templateStr = templateLines.join('\n');
+
+        // 7. 生成 Script
+        var scriptLines = [];
+        scriptLines.push('<' + 'script>');
+        scriptLines.push('export default {');
+        scriptLines.push('  name: \'' + compName + '\',');
+        scriptLines.push('  props: {');
+        scriptLines.push('    themeColors: {');
+        scriptLines.push('      type: Object,');
+        scriptLines.push('      default: () => ({})');
+        scriptLines.push('    }');
+        scriptLines.push('  },');
+        scriptLines.push('  data() {');
+        scriptLines.push('    return {');
+        scriptLines.push('      i18n: ' + JSON.stringify(i18nData, null, 6).replace(/\n/g, '\n        ') + ',');
+        scriptLines.push('      eventBusName: \'' + eventBusName + '\'');
+        scriptLines.push('    };');
+        scriptLines.push('  },');
+        scriptLines.push('  computed: {');
+        scriptLines.push('    themeVars() {');
+        scriptLines.push('      return {');
+        scriptLines.push('        \'--primary\': this.themeColors.primary || \'' + themeColors.primary + '\',');
+        scriptLines.push('        \'--secondary\': this.themeColors.secondary || \'' + themeColors.secondary + '\',');
+        scriptLines.push('        \'--text\': this.themeColors.text || \'' + themeColors.text + '\',');
+        scriptLines.push('        \'--accent1\': this.themeColors.accent1 || \'' + themeColors.accent1 + '\',');
+        scriptLines.push('        \'--accent2\': this.themeColors.accent2 || \'' + themeColors.accent2 + '\',');
+        scriptLines.push('        \'--accent3\': this.themeColors.accent3 || \'' + themeColors.accent3 + '\',');
+        scriptLines.push('        \'--accent4\': this.themeColors.accent4 || \'' + themeColors.accent4 + '\'');
+        scriptLines.push('      };');
+        scriptLines.push('    }');
+        scriptLines.push('  },');
+        scriptLines.push('  methods: {');
+        scriptLines.push('    /**');
+        scriptLines.push('     * å¤šè¯­è¨€æ–‡æœ¬èŽ·å–');
+        scriptLines.push('     * ä½¿ç”¨ this.$i18n.local åˆ‡æ¢è¯­è¨€ï¼Œi18n å·²åœ¨ä¸»å¹³å°å…¨å±€æ³¨å†Œ');
+        scriptLines.push('     */');
+        scriptLines.push('    $t(key) {');
+        scriptLines.push('      const lang = (this.$i18n && this.$i18n.local) || \'zh\';');
+        scriptLines.push('      return (this.i18n[lang] && this.i18n[lang][key]) || (this.i18n[\'zh\'] && this.i18n[\'zh\'][key]) || key;');
+        scriptLines.push('    },');
+        scriptLines.push('    /**');
+        scriptLines.push('     * EventBus äº‹ä»¶è§¦å‘');
+        scriptLines.push('     * ä½¿ç”¨ this.$EventBus.$emit è¿›è¡Œäº‹ä»¶é€šä¿¡');
+        scriptLines.push('     */');
+        scriptLines.push('    handleEventBus(elId, eventType) {');
+        scriptLines.push('      const payload = {');
+        scriptLines.push('        elId: elId,');
+        scriptLines.push('        eventType: eventType,');
+        scriptLines.push('        timestamp: Date.now()');
+        scriptLines.push('      };');
+        scriptLines.push('      if (this.$EventBus && this.$EventBus.$emit) {');
+        scriptLines.push('        this.$EventBus.$emit(this.eventBusName, payload);');
+        scriptLines.push('      }');
+        scriptLines.push('    }');
+        scriptLines.push('  }');
+        scriptLines.push('};');
+        scriptLines.push('</' + 'script>');
+        var scriptStr = scriptLines.join('\n');
+
+        // 8. ç”Ÿæˆ Style
+        var styleLines = [];
+        styleLines.push('<' + 'style scoped>');
+        styleLines.push('.' + compName.toLowerCase() + '-wrapper {');
+        styleLines.push('  /* ä¸»é¢˜å˜é‡ - æ¥è‡ªå…¨å±€é…ç½®æ¨¡å— */');
+        styleLines.push('  --primary: var(--primary, ' + themeColors.primary + ');');
+        styleLines.push('  --secondary: var(--secondary, ' + themeColors.secondary + ');');
+        styleLines.push('  --text: var(--text, ' + themeColors.text + ');');
+        styleLines.push('  --accent1: var(--accent1, ' + themeColors.accent1 + ');');
+        styleLines.push('  --accent2: var(--accent2, ' + themeColors.accent2 + ');');
+        styleLines.push('  --accent3: var(--accent3, ' + themeColors.accent3 + ');');
+        styleLines.push('  --accent4: var(--accent4, ' + themeColors.accent4 + ');');
+        styleLines.push('');
+        styleLines.push('  background: #fff;');
+        styleLines.push('  border-radius: 12px;');
+        styleLines.push('  padding: 24px;');
+        styleLines.push('  font-family: Inter, system-ui, sans-serif;');
+        styleLines.push('}');
+        styleLines.push('<' + '/style>');
+        var styleStr = styleLines.join('\n');
+
+        return templateStr + '\n\n' + scriptStr + '\n\n' + styleStr;
+      }
+
+      // å¼¹çª—æ˜¾ç¤º / éšè—
+      $('#btn-export-vue').on('click', function() {
+        var code = generateVueCode();
+        $('#export-code').text(code);
+        $('#export-modal').show();
+        lucide.createIcons();
+      });
+
+      $('#btn-close-modal, #modal-backdrop').on('click', function() {
+        $('#export-modal').hide();
+      });
+
+      // å¤åˆ¶ä»£ç 
+      $('#btn-copy-code').on('click', function() {
+        var code = $('#export-code').text();
+        var ta = document.createElement('textarea');
+        ta.value = code;
+        ta.style.position = 'fixed';
+        ta.style.left = '-9999px';
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        var btn = $(this);
+        var orig = btn.html();
+        btn.html('<i data-lucide="check" class="w-3.5 h-3.5"></i>å·²å¤åˆ¶');
+        lucide.createIcons();
+        setTimeout(function() {
+          btn.html(orig);
+          lucide.createIcons();
+        }, 2000);
+      });
+
+      // ä¸‹è½½ .vue æ–‡ä»¶
+      $('#btn-download-vue').on('click', function() {
+        var code = $('#export-code').text();
+        var compName = $('#editing-file-indicator').text().replace('å½“å‰ç¼–è¾‘ï¼š','').trim() || 'GeneratedComponent';
+        var blob = new Blob([code], { type: 'text/plain;charset=utf-8' });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = compName;
+        a.click();
+        URL.revokeObjectURL(url);
       });
 
       // =============================================
@@ -1465,6 +1684,41 @@
   <!-- @nav:end -->
 
   <script>lucide.createIcons();</script>
+
+  <!-- ===== 导出组件弹窗 ===== -->
+  <div id="export-modal" class="fixed inset-0 z-50 hidden" style="display:none;">
+    <div class="absolute inset-0 bg-black/40 backdrop-blur-sm" id="modal-backdrop"></div>
+    <div class="absolute inset-4 md:inset-10 flex items-center justify-center pointer-events-none">
+      <div class="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden pointer-events-auto">
+        <!-- Modal header -->
+        <div class="flex items-center justify-between px-6 py-4 border-b border-outline-variant/20">
+          <div>
+            <h2 class="text-lg font-bold text-on-surface">导出组件</h2>
+            <p class="text-xs text-on-surface-variant/60 mt-0.5" id="modal-file-name">UserTable.vue — 可直接复制到 Vue 2 项目中使用</p>
+          </div>
+          <button id="btn-close-modal" class="w-8 h-8 rounded-lg hover:bg-surface-container flex items-center justify-center transition-colors">
+            <i data-lucide="x" class="w-4 h-4 text-on-surface"></i>
+          </button>
+        </div>
+        <!-- Code area -->
+        <div class="flex-1 overflow-auto p-6 bg-[#1e1e2e]">
+          <pre id="export-code" class="text-sm font-mono text-gray-100 whitespace-pre-wrap leading-relaxed"></pre>
+        </div>
+        <!-- Footer -->
+        <div class="flex items-center justify-between px-6 py-4 border-t border-outline-variant/20 bg-surface-container/30">
+          <span class="text-xs text-on-surface-variant/60">代码已就绪，复制后可直接用于 Vue 项目</span>
+          <div class="flex gap-2">
+            <button id="btn-copy-code" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium bg-white border border-outline-variant/30 text-on-surface hover:bg-surface-container transition-colors">
+              <i data-lucide="clipboard" class="w-3.5 h-3.5"></i>复制代码
+            </button>
+            <button id="btn-download-vue" class="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium bg-primary text-on-primary hover:opacity-90 transition-colors">
+              <i data-lucide="download" class="w-3.5 h-3.5"></i>下载 .vue 文件
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </body>
 
 </html>
