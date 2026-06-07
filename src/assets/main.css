@@ -3,12 +3,45 @@
 @tailwind components;
 @tailwind utilities;
 
-/* 全局基础样式 */
+/* 全局基础样式 - 避免使用 @apply 引用自定义颜色（Tailwind v2 限制） */
 body {
-  @apply bg-surface-bg text-text-primary font-sans antialiased;
+  background-color: #F6F8FB;
+  color: #152033;
   margin: 0;
   padding: 0;
+  font-family: Inter, IBM Plex Sans, ui-sans-serif, system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
+
+/* 场景色 CSS 变量 */
+:root {
+  --color-brand: #2F6BFF;
+  --color-surface-bg: #F6F8FB;
+  --color-surface-card: #FFFFFF;
+  --color-text-primary: #152033;
+  --color-text-secondary: #637089;
+  --color-border: #E6EAF2;
+  --color-success: #16A37B;
+  --brand-10: rgba(47, 107, 255, 0.1);
+  --brand-30: rgba(47, 107, 255, 0.3);
+  --brand-40: rgba(47, 107, 255, 0.4);
+  --brand-90: rgba(47, 107, 255, 0.9);
+  --text-secondary-50: rgba(99, 112, 137, 0.5);
+}
+
+/* 自定义透明度工具类（Tailwind v2 不支持 /xx 语法，手动补全） */
+.bg-brand\/90 { background-color: rgba(47, 107, 255, 0.9); }
+.bg-primary\/10 { background-color: rgba(47, 107, 255, 0.1); }
+.border-brand\/30 { border-color: rgba(47, 107, 255, 0.3); }
+.border-brand\/40 { border-color: rgba(47, 107, 255, 0.4); }
+.hover\:bg-brand\/90:hover { background-color: rgba(47, 107, 255, 0.9); }
+.hover\:bg-primary\/10:hover { background-color: rgba(47, 107, 255, 0.1); }
+.hover\:border-brand\/40:hover { border-color: rgba(47, 107, 255, 0.4); }
+.focus\:ring-brand\/30:focus { --tw-ring-color: rgba(47, 107, 255, 0.3); }
+.focus\:border-brand:focus { border-color: #2F6BFF; }
+.placeholder-text-secondary\/50::placeholder { color: rgba(99, 112, 137, 0.5); }
+.ring-brand\/30 { --tw-ring-color: rgba(47, 107, 255, 0.3); }
 
 /* 滚动条样式 */
 ::-webkit-scrollbar {

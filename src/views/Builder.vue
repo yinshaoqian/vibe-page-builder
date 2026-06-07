@@ -192,12 +192,9 @@
               <span class="text-[10px] text-[#637089]">更新于 {{ previewingModule.updatedAt?.slice(0, 10) }}</span>
             </div>
           </div>
-          <div class="bg-[#F6F8FB] rounded-xl border border-[#E6EAF2] overflow-hidden p-3 mb-4">
-            <SandboxPreviewPanel>
-              <template #mock-preview>
-                <div class="py-6 text-center text-xs text-[#637089]">沙箱渲染中…</div>
-              </template>
-            </SandboxPreviewPanel>
+          <div class="bg-white rounded-xl border border-[#E6EAF2] overflow-hidden mb-4 min-h-[120px]">
+            <ModulePreviewOnCanvas v-if="previewingModule" :component-id="previewingModule.id" />
+            <div v-else class="flex items-center justify-center py-10 text-xs text-[#637089]">无预览数据</div>
           </div>
           <button @click="addModuleToCanvas(previewingModule)"
             class="w-full flex items-center justify-center gap-1.5 px-3 py-2 text-sm text-white bg-[#2F6BFF] rounded-lg hover:bg-blue-600 transition-colors">
@@ -229,12 +226,8 @@
           <!-- 模块预览 -->
           <div v-if="selectedItem?.type === 'module' && selectedModuleData">
             <h4 class="text-xs font-medium text-[#152033] mb-2">组件预览</h4>
-            <div class="bg-[#F6F8FB] rounded-xl border border-[#E6EAF2] overflow-hidden p-2 mb-4">
-              <SandboxPreviewPanel>
-                <template #mock-preview>
-                  <div class="py-4 text-center text-xs text-[#637089]">沙箱渲染中…</div>
-                </template>
-              </SandboxPreviewPanel>
+            <div class="bg-white rounded-xl border border-[#E6EAF2] overflow-hidden mb-4">
+              <ModulePreviewOnCanvas :component-id="selectedItem.componentId" />
             </div>
           </div>
 
@@ -253,7 +246,6 @@ import { ref, computed } from 'vue'
 import { sendToPlatform } from '../composables/usePostMessage'
 import { useComponentStore } from '../composables/useComponentStore'
 import type { StoredComponent, CanvasItem } from '../types'
-import SandboxPreviewPanel from '../components/SandboxPreviewPanel.vue'
 import ModulePreviewOnCanvas from '../components/ModulePreviewOnCanvas.vue'
 
 // ===== 共享存储 =====
