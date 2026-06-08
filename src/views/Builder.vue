@@ -100,65 +100,83 @@
         </div>
       </div>
 
-      <!-- 画布主体（相对定位容器，浮层基于此定位） -->
-      <div class="flex-1 overflow-auto p-6 relative"
+      <!-- ===== 无限画布主体 ===== -->
+      <div class="flex-1 overflow-hidden relative select-none"
+        ref="canvasAreaRef"
         @dragover.prevent="onDragOver"
         @dragleave="onDragLeave"
-        @drop="onDrop">
-        <div class="flex items-start justify-center min-h-full">
-          <div class="bg-white rounded-xl shadow-sm border border-[#E6EAF2] transition-all flex flex-col"
-            :style="{ width: canvasWidth, transform: `scale(${zoomLevel / 100})`, transformOrigin: 'top center', maxHeight: '100%' }">
-            <div class="flex-1 min-h-[500px] relative overflow-y-auto">
-              <!-- 空状态 -->
-              <div v-if="!canvasItems.length"
-                class="flex flex-col items-center justify-center py-24 text-center select-none min-h-[500px]"
-                :class="dragOver ? 'bg-blue-50/40' : ''">
-                <svg class="w-14 h-14 mb-3 text-[#E6EAF2]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4v16m8-8H4"/></svg>
-                <p class="text-sm text-[#637089]">拖拽组件模块到此处</p>
-                <p class="text-xs text-[#637089] mt-1">或点击左侧模块预览后添加</p>
-              </div>
+        @drop="onDrop"
+        @mousedown="onCanvasMouseDown"
+        @mousemove="onCanvasMouseMove"
+        @mouseup="onCanvasMouseUp"
+        @mouseleave="onCanvasMouseUp">
+        <!-- 背景网格 -->
+        <div class="absolute inset-0 pointer-events-none"
+          style="background-image:
+            linear-gradient(rgba(0,0,0,0.04) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(0,0,0,0.04) 1px, transparent 1px);
+          background-size: 24px 24px;"></div>
 
-              <!-- 画布上的组件列表 -->
-              <div v-if="canvasItems.length" class="p-5 space-y-3">
-                <div v-for="(item, i) in canvasItems" :key="item.instanceId"
-                  class="relative group rounded-xl border transition-all cursor-pointer"
-                  :class="selectedIndex === i
-                    ? 'border-[#2F6BFF] ring-2 ring-[#2F6BFF]/20 shadow-md'
-                    : 'border-[#E6EAF2] hover:border-[#2F6BFF]/40 hover:shadow-sm'"
-                  @click="selectItem(i)">
-                  <div class="flex items-center justify-between px-4 py-2 bg-[#F6F8FB] border-b border-[#E6EAF2] rounded-t-xl">
-                    <div class="flex items-center gap-2">
-                      <span v-if="item.type === 'layout'" class="text-base">{{ getLayoutIcon(item.name) }}</span>
-                      <svg v-else class="w-4 h-4 text-[#2F6BFF]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
-                      <span class="text-sm font-medium text-[#152033]">{{ item.name }}</span>
-                      <span class="text-[10px] px-1.5 py-0.5 rounded"
-                        :class="item.type === 'layout' ? 'bg-amber-50 text-amber-600' : 'bg-blue-50 text-[#2F6BFF]'">
-                        {{ item.type === 'layout' ? '容器' : '模块' }}
-                      </span>
-                    </div>
-                    <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
-                      <button v-if="i > 0" @click.stop="moveItem(i, -1)" class="p-1 rounded hover:bg-white text-[#637089] hover:text-[#152033]" title="上移">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/></svg>
-                      </button>
-                      <button v-if="i < canvasItems.length - 1" @click.stop="moveItem(i, 1)" class="p-1 rounded hover:bg-white text-[#637089] hover:text-[#152033]" title="下移">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-                      </button>
-                      <button @click.stop="removeItem(i)" class="p-1 rounded hover:bg-red-50 text-[#637089] hover:text-red-500" title="移除">
-                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                      </button>
-                    </div>
-                  </div>
-                  <div class="p-4">
-                    <div v-if="item.type === 'layout'" class="flex items-center justify-center py-6 text-[#637089]">
-                      <div class="text-center">
-                        <span class="text-3xl mb-1 block">{{ getLayoutIcon(item.name) }}</span>
-                        <span class="text-xs">{{ item.name }}</span>
-                        <p class="text-[10px] text-[#637089] mt-1">布局容器 — 可嵌套组件</p>
+        <!-- 变换层（平移 + 缩放） -->
+        <div class="absolute" :style="infiniteCanvasStyleRef">
+          <div class="flex items-start justify-center" style="min-width: 200vw; min-height: 200vh; padding: 80px;">
+            <div class="bg-white rounded-xl shadow-sm border border-[#E6EAF2] transition-all flex flex-col"
+              :style="{ width: canvasWidth }">
+              <div class="min-h-[500px] relative overflow-y-auto">
+                <!-- 空状态 -->
+                <div v-if="!canvasItems.length"
+                  class="flex flex-col items-center justify-center py-24 text-center select-none min-h-[500px]"
+                  :class="dragOver ? 'bg-blue-50/40' : ''">
+                  <svg class="w-14 h-14 mb-3 text-[#E6EAF2]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4v16m8-8H4"/></svg>
+                  <p class="text-sm text-[#637089]">拖拽组件模块到此处</p>
+                  <p class="text-xs text-[#637089] mt-1">或点击左侧模块预览后添加</p>
+                </div>
+
+                <!-- 画布上的组件列表 -->
+                <div v-if="canvasItems.length" class="p-5 space-y-3">
+                  <div v-for="(item, i) in canvasItems" :key="item.instanceId"
+                    class="relative group rounded-xl border transition-all cursor-pointer"
+                    :class="[
+                      selectedIndex === i
+                        ? 'border-[#2F6BFF] ring-2 ring-[#2F6BFF]/20 shadow-md'
+                        : 'border-[#E6EAF2] hover:border-[#2F6BFF]/40 hover:shadow-sm',
+                      canvasHighlightIndex === i ? 'ring-2 ring-[#2F6BFF]/30 shadow-md border-[#2F6BFF]' : ''
+                    ]"
+                    @click="selectItem(i)">
+                    <div class="flex items-center justify-between px-4 py-2 bg-[#F6F8FB] border-b border-[#E6EAF2] rounded-t-xl">
+                      <div class="flex items-center gap-2">
+                        <span v-if="item.type === 'layout'" class="text-base">{{ getLayoutIcon(item.name) }}</span>
+                        <svg v-else class="w-4 h-4 text-[#2F6BFF]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+                        <span class="text-sm font-medium text-[#152033]">{{ item.name }}</span>
+                        <span class="text-[10px] px-1.5 py-0.5 rounded"
+                          :class="item.type === 'layout' ? 'bg-amber-50 text-amber-600' : 'bg-blue-50 text-[#2F6BFF]'">
+                          {{ item.type === 'layout' ? '容器' : '模块' }}
+                        </span>
+                      </div>
+                      <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all">
+                        <button v-if="i > 0" @click.stop="moveItem(i, -1)" class="p-1 rounded hover:bg-white text-[#637089] hover:text-[#152033]" title="上移">
+                          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/></svg>
+                        </button>
+                        <button v-if="i < canvasItems.length - 1" @click.stop="moveItem(i, 1)" class="p-1 rounded hover:bg-white text-[#637089] hover:text-[#152033]" title="下移">
+                          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                        </button>
+                        <button @click.stop="removeItem(i)" class="p-1 rounded hover:bg-red-50 text-[#637089] hover:text-red-500" title="移除">
+                          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                        </button>
                       </div>
                     </div>
-                    <div v-else-if="item.type === 'module'">
-                      <div class="min-h-[60px] rounded-lg overflow-hidden border border-[#E6EAF2]">
-                        <ModulePreviewOnCanvas :component-id="item.componentId" />
+                    <div class="p-4">
+                      <div v-if="item.type === 'layout'" class="flex items-center justify-center py-6 text-[#637089]">
+                        <div class="text-center">
+                          <span class="text-3xl mb-1 block">{{ getLayoutIcon(item.name) }}</span>
+                          <span class="text-xs">{{ item.name }}</span>
+                          <p class="text-[10px] text-[#637089] mt-1">布局容器 — 可嵌套组件</p>
+                        </div>
+                      </div>
+                      <div v-else-if="item.type === 'module'">
+                        <div class="min-h-[60px] rounded-lg overflow-hidden border border-[#E6EAF2]">
+                          <ModulePreviewOnCanvas :component-id="item.componentId" />
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -206,22 +224,47 @@
           </div>
         </div>
 
-        <!-- ===== 组件列表抽屉（右下角） ===== -->
+        <!-- ===== 组件列表抽屉（固定在画布左侧底部） ===== -->
         <div class="fixed left-[268px] bottom-4 z-50 flex flex-col items-start"
           @mouseenter="showComponentList = true"
           @mouseleave="showComponentList = false">
           <div v-if="showComponentList && canvasItems.length" class="bg-white rounded-xl shadow-2xl border border-[#E6EAF2] overflow-hidden transition-all"
-            @mouseenter="showComponentList = true">
+            @mouseenter="showComponentList = true"
+            style="max-width: 380px;">
             <div class="flex items-center justify-between px-4 py-2.5 border-b border-[#E6EAF2] bg-white">
               <span class="text-sm font-medium text-[#152033]">画布组件列表</span>
-              <span class="text-[10px] text-[#637089]">{{ canvasItems.length }} 项</span>
+              <div class="flex items-center gap-3">
+                <!-- 缩放控件 -->
+                <div class="flex items-center gap-1 bg-[#F6F8FB] rounded-md px-1.5 py-0.5">
+                  <button @click.stop="zoomOut" class="p-0.5 rounded hover:bg-white text-[#637089] hover:text-[#152033]" title="缩小">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/></svg>
+                  </button>
+                  <span class="text-[10px] text-[#637089] w-8 text-center select-none">{{ zoomLevel }}%</span>
+                  <button @click.stop="zoomIn" class="p-0.5 rounded hover:bg-white text-[#637089] hover:text-[#152033]" title="放大">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                  </button>
+                </div>
+                <span class="text-[10px] text-[#637089]">{{ canvasItems.length }} 项</span>
+              </div>
             </div>
             <div class="max-h-64 overflow-y-auto">
               <div v-for="(item, i) in canvasItems" :key="item.instanceId"
-                class="flex items-center gap-2 px-4 py-2.5 border-b border-[#E6EAF2] last:border-b-0 hover:bg-[#F6F8FB] transition-colors cursor-pointer"
-                :class="{ 'bg-blue-50/30': selectedIndex === i }"
+                draggable="true"
+                @dragstart="onListDragStart(i, $event)"
+                @dragover.prevent="onListDragOver(i)"
+                @drop.prevent="onListDrop(i)"
+                @dragend="onListDragEnd"
+                @mouseenter="hoveredListIndex = i"
+                @mouseleave="hoveredListIndex = null"
+                class="flex items-center gap-2 px-4 py-2.5 border-b border-[#E6EAF2] last:border-b-0 transition-colors cursor-pointer"
+                :class="{
+                  'bg-blue-50/30': selectedIndex === i,
+                  'bg-blue-50/60 ring-2 ring-[#2F6BFF]/20': hoveredListIndex === i,
+                  'opacity-50': dragSourceIdx === i
+                }"
                 @click="selectItem(i)">
-                <div class="cursor-grab active:cursor-grabbing text-[#637089] opacity-40 hover:opacity-100 transition-opacity shrink-0">
+                <div class="cursor-grab active:cursor-grabbing text-[#637089] opacity-40 hover:opacity-100 transition-opacity shrink-0"
+                  @click.stop>
                   <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M8 6a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm0 6a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm0 6a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm6-12a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm0 6a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm0 6a2 2 0 1 1-4 0 2 2 0 0 1 4 0z"/></svg>
                 </div>
                 <div class="flex-1 min-w-0">
@@ -249,7 +292,7 @@
               </div>
             </div>
           </div>
-          <!-- invisible bridge: connects button ↔ drawer so hover stays continuous -->
+          <!-- invisible bridge -->
           <div v-if="showComponentList" class="h-2 w-full -mt-1"></div>
           <!-- 列表切换按钮 -->
           <button
@@ -361,9 +404,35 @@ function addModuleToCanvas(mod: StoredComponent) {
 
 // ===== 组件列表抽屉 =====
 const showComponentList = ref(false)
+const hoveredListIndex = ref<number | null>(null)
+const canvasHighlightIndex = computed(() => hoveredListIndex.value)
 watch(canvasItems, () => {
   if (!canvasItems.value.length) showComponentList.value = false
 }, { deep: true })
+
+// ===== 列表拖拽排序 (HTML5 DnD) =====
+const dragSourceIdx = ref<number | null>(null)
+function onListDragStart(idx: number, e: DragEvent) {
+  dragSourceIdx.value = idx
+  if (e.dataTransfer) e.dataTransfer.effectAllowed = 'move'
+}
+function onListDragOver(idx: number) {
+  if (dragSourceIdx.value === null || dragSourceIdx.value === idx) return
+  const items = canvasItems.value
+  const from = dragSourceIdx.value
+  const to = idx
+  items.splice(to, 0, items.splice(from, 1)[0])
+  dragSourceIdx.value = to
+  // keep selection in sync
+  if (selectedIndex.value === from) selectedIndex.value = to
+  else if (selectedIndex.value === to) selectedIndex.value = from
+}
+function onListDrop(_idx: number) {
+  dragSourceIdx.value = null
+}
+function onListDragEnd() {
+  dragSourceIdx.value = null
+}
 
 // ===== 画布操作 =====
 function removeItem(idx: number) {
@@ -415,8 +484,45 @@ const canvasWidth = computed(() => {
 })
 
 const zoomLevel = ref(100)
-function zoomIn() { if (zoomLevel.value < 200) zoomLevel.value += 10 }
-function zoomOut() { if (zoomLevel.value > 50) zoomLevel.value -= 10 }
+function zoomIn() { if (zoomLevel.value < 150) zoomLevel.value += 10 }
+function zoomOut() { if (zoomLevel.value > 20) zoomLevel.value -= 10 }
+
+// ===== 无限画布拖拽平移 =====
+const isPanning = ref(false)
+const panStart = ref({ x: 0, y: 0 })
+const panOffset = ref({ x: 0, y: 0 })
+const canvasAreaRef = ref<HTMLElement | null>(null)
+
+const infiniteCanvasStyleRef = computed(() => {
+  const s = zoomLevel.value / 100
+  return {
+    transform: `translate(${panOffset.value.x}px, ${panOffset.value.y}px) scale(${s})`,
+    transformOrigin: '0 0',
+  }
+})
+
+function onCanvasMouseDown(e: MouseEvent) {
+  // left button (button 0) or middle button (button 1)
+  if (e.button !== 0 && e.button !== 1) return
+  e.preventDefault()
+  isPanning.value = true
+  panStart.value = { x: e.clientX - panOffset.value.x, y: e.clientY - panOffset.value.y }
+  if (canvasAreaRef.value) canvasAreaRef.value.style.cursor = 'grabbing'
+}
+
+function onCanvasMouseMove(e: MouseEvent) {
+  if (!isPanning.value) return
+  panOffset.value = {
+    x: e.clientX - panStart.value.x,
+    y: e.clientY - panStart.value.y,
+  }
+}
+
+function onCanvasMouseUp(_e: MouseEvent) {
+  isPanning.value = false
+  if (canvasAreaRef.value) canvasAreaRef.value.style.cursor = 'grab'
+}
+
 function handleSave() {
   sendToPlatform('save-builder-config', {
     items: canvasItems.value.map(it => ({
