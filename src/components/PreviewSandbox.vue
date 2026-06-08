@@ -1,5 +1,5 @@
 <template>
-  <div class="preview-sandbox relative min-h-[200px]" ref="sandboxRef">
+  <div class="preview-sandbox relative min-h-[200px] overflow-hidden" ref="sandboxRef" style="transform: translateZ(0)">
     <!-- 加载态 -->
     <div v-if="loading" class="absolute inset-0 flex items-center justify-center bg-white/60 z-10">
       <div class="flex items-center gap-2 text-sm text-text-secondary">

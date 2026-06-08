@@ -1,5 +1,5 @@
 <template>
-  <div class="module-preview-on-canvas w-full">
+  <div class="module-preview-on-canvas w-full" style="transform: translateZ(0)">
     <div v-if="!componentData" class="flex items-center justify-center py-8 text-xs text-[#637089]">
       未找到组件数据
     </div>
