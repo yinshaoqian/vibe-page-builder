@@ -260,13 +260,15 @@
               class="flex items-center gap-1.5 px-2.5 py-1.5 border-b border-[#E6EAF2] last:border-b-0 transition-colors cursor-pointer"
               :class="{
                 'bg-blue-50/30': selectedIndex === i,
-                'bg-blue-50/60': hoveredListIndex === i,
-                'opacity-50': dragSourceIdx === i
+                'bg-blue-50/60': hoveredListIndex === i && selectedIndex !== i,
+                'opacity-50': dragSourceIdx === i,
+                'border-l-2 border-l-brand': selectedIndex === i,
               }"
               @click="selectItem(i)">
-              <div class="cursor-grab active:cursor-grabbing text-[#637089] opacity-40 hover:opacity-100 transition-opacity shrink-0" @click.stop>
+              <div class="cursor-grab active:cursor-grabbing text-[#637089] opacity-40 hover:opacity-100 transition-opacity shrink-0 flex items-center gap-1" @click.stop>
                 <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M8 6a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm0 6a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm0 6a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm6-12a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm0 6a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm0 6a2 2 0 1 1-4 0 2 2 0 0 1 4 0z"/></svg>
               </div>
+              <span class="text-[9px] text-text-secondary w-4 text-right shrink-0 font-mono" :class="{ 'text-brand font-semibold': selectedIndex === i }">{{ i + 1 }}</span>
               <div class="flex-1 min-w-0 flex items-center gap-1.5">
                 <span v-if="item.type === 'layout'" class="text-[9px]">{{ getLayoutIcon(item.name) }}</span>
                 <svg v-else class="w-2.5 h-2.5 text-[#2F6BFF] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
