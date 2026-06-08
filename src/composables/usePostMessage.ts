@@ -2,7 +2,7 @@
 // 通过 postMessage 与嵌入的主平台通信
 
 export interface PlatformMessage {
-  type: 'save' | 'load' | 'update'
+  type: string
   payload: Record<string, unknown>
 }
 

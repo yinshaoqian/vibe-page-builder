@@ -9,7 +9,7 @@
 
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
-import { createApp, type App } from 'vue/dist/vue.esm-bundler'
+import { createApp, type App } from 'vue'
 import { useComponentStore } from '../composables/useComponentStore'
 
 const props = defineProps<{ componentId: string }>()
@@ -46,7 +46,7 @@ function mountPreview() {
 
   // 创建沙箱 app
   appInstance = createApp(componentDef)
-  appInstance.config.errorHandler = (err) => console.warn('[Canvas Preview]', err)
+  appInstance.config.errorHandler = (err: unknown) => console.warn('[Canvas Preview]', err)
   appInstance.config.globalProperties.$t = (key: string) => key
   appInstance.config.globalProperties.$i18n = { locale: 'zh', local: 'zh' }
   appInstance.config.globalProperties.$root = { $on: () => {} }

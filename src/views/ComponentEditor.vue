@@ -1,257 +1,380 @@
 <template>
-  <div class="flex-1 flex overflow-hidden">
-    <!-- 左侧边栏：文件列表 + 绑定清单 -->
-    <aside class="w-56 bg-surface-card border-r border-border flex flex-col shrink-0">
+  <div class="flex-1 flex overflow-hidden bg-surface-bg">
+    <!-- ====== 左侧面板：文件列表 + 绑定清单 ====== -->
+    <aside class="w-56 bg-surface-card border-r border-border flex flex-col shrink-0 select-none">
       <!-- 组件文件列表 -->
-      <div class="border-b border-border">
-        <div class="px-3 py-2.5 flex items-center justify-between">
-          <span class="text-xs font-medium uppercase tracking-wider text-text-secondary">组件文件</span>
-          <div class="flex items-center gap-1">
-            <button @click="createNewFile" class="p-1 rounded hover:bg-surface-bg text-text-secondary hover:text-brand transition-colors" title="新增组件">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-            </button>
-            <button v-if="activeFile" @click="deleteCurrentFile" class="p-1 rounded hover:bg-red-50 text-text-secondary hover:text-red-500 transition-colors" title="删除组件">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+      <div class="flex flex-col flex-1 min-h-0">
+        <div class="flex items-center justify-between px-4 py-2.5 border-b border-border">
+          <span class="text-sm font-semibold text-text-primary">组件模块</span>
+          <button @click="createNewFile" class="text-xs px-2 py-0.5 rounded bg-brand text-white hover:bg-brand/90 transition-colors">+ 新建</button>
+        </div>
+        <div class="flex-1 overflow-y-auto">
+          <div
+            v-for="file in storeFiles"
+            :key="file.id"
+            @click="loadFile(file)"
+            class="group flex items-center justify-between px-4 py-2.5 mx-2 mt-1 rounded-lg cursor-pointer transition-colors"
+            :class="activeFileId === file.id ? 'bg-brand/10 text-brand' : 'hover:bg-gray-50 text-text-primary'"
+          >
+            <div class="flex items-center gap-2 min-w-0">
+              <svg class="w-4 h-4 shrink-0" :class="activeFileId === file.id ? 'text-brand' : 'text-gray-400'" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              <div class="min-w-0">
+                <div class="text-xs font-medium truncate">{{ file.name }}</div>
+                <div class="text-[10px] text-text-secondary truncate">{{ file.description || '无描述' }}</div>
+              </div>
+            </div>
+            <button
+              v-if="activeFileId === file.id"
+              @click.stop="deleteFile(file.id)"
+              class="opacity-0 group-hover:opacity-100 text-gray-300 hover:text-red-400 transition-all shrink-0"
+              title="删除"
+            >
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0 1 16.138 21H7.862a2 2 0 0 1-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v3M4 7h16"/></svg>
             </button>
           </div>
-        </div>
-        <div class="px-2 pb-2 space-y-0.5">
-          <button v-for="f in componentFiles" :key="f.id || f.name"
-            class="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-md text-sm transition-colors text-left"
-            :class="activeFile === f.name ? 'bg-blue-50 text-brand font-medium' : 'text-text-secondary hover:text-text-primary hover:bg-surface-bg'"
-            @click="activeFile = f.name">
-            <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-            <span class="truncate">{{ f.name }}</span>
-          </button>
-          <div v-if="!componentFiles.length" class="text-xs text-text-secondary text-center py-4">暂无组件，点击 + 新建</div>
+          <div v-if="storeFiles.length === 0" class="flex flex-col items-center justify-center py-12 text-text-secondary/50">
+            <svg class="w-10 h-10 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M9 13h6m-3-3v6m5 5H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5.586a1 1 0 0 1 .707.293l5.414 5.414a1 1 0 0 1 .293.707V19a2 2 0 0 1-2 2z"/></svg>
+            <span class="text-xs">暂无组件</span>
+          </div>
         </div>
       </div>
-      <!-- 绑定清单 -->
-      <div class="flex-1 flex flex-col min-h-0">
-        <div class="px-3 py-2.5 flex items-center justify-between shrink-0">
-          <span class="text-xs font-medium uppercase tracking-wider text-text-secondary">绑定清单</span>
-          <span v-if="bindings.length" class="text-xs text-text-secondary bg-surface-bg px-1.5 py-0.5 rounded">{{ bindings.length }}</span>
+
+      <!-- 事件绑定清单（仅当有当前文件时展示） -->
+      <div v-if="activeFileId" class="border-t border-border">
+        <div class="px-4 py-2.5 border-b border-border">
+          <span class="text-sm font-semibold text-text-primary">事件绑定清单</span>
         </div>
-        <div class="flex-1 overflow-y-auto px-2 pb-2 space-y-1">
-          <div v-for="b in bindings" :key="b.id"
-            class="binding-item flex items-center gap-2 px-2.5 py-1.5 rounded-md text-sm cursor-default transition-all"
-            :class="hoveredBindingId === b.id ? 'bg-blue-50 ring-2 ring-brand/30' : 'bg-surface-bg/50 hover:bg-surface-bg'"
-            @mouseenter="hoveredBindingId = b.id"
-            @mouseleave="hoveredBindingId = null">
-            <span class="text-xs font-mono text-brand shrink-0">{{ b.elTag }}</span>
-            <span class="text-xs px-1.5 py-0.5 rounded bg-gray-100 text-text-secondary">{{ b.eventType }}</span>
-            <button @click="removeBinding(b.id)" class="ml-auto p-0.5 rounded hover:bg-red-50 text-text-secondary hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all">
-              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        <div class="overflow-y-auto max-h-40">
+          <div
+            v-for="(binding, idx) in bindings"
+            :key="idx"
+            @mouseenter="highlightBinding(idx)"
+            @mouseleave="clearBindingHighlight(idx)"
+            class="group flex items-center gap-2 px-4 py-1.5 text-xs text-text-secondary hover:bg-gray-50 cursor-pointer transition-colors border-b border-border/50 last:border-0"
+          >
+            <svg class="w-3 h-3 shrink-0 text-yellow-500" fill="currentColor" viewBox="0 0 24 24"><path d="M13 10h5l-4 8v-6h-5l4-8v6z"/></svg>
+            <span class="truncate flex-1">
+              <span class="text-gray-400">{{ binding.elementTag || 'div' }}</span>
+              <span class="text-brand ml-1">@{{ binding.event || 'click' }}</span>
+            </span>
+            <button @click.stop="removeBinding(idx)" class="opacity-0 group-hover:opacity-100 text-gray-300 hover:text-red-400 transition-all" title="删除绑定">
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
             </button>
           </div>
-          <div v-if="!bindings.length" class="text-xs text-text-secondary text-center py-6">暂无绑定</div>
+          <div v-if="bindings.length === 0" class="px-4 py-4 text-center text-xs text-text-secondary/50">暂无绑定</div>
         </div>
       </div>
     </aside>
 
-    <!-- 主编辑区 -->
+    <!-- ====== 主内容区域 ====== -->
     <div class="flex-1 flex flex-col min-w-0">
-      <!-- 子 Tab 条 -->
-      <div class="h-11 bg-surface-card border-b border-border flex items-center px-4 gap-1 shrink-0">
-        <button v-for="t in editorTabs" :key="t.key"
-          class="px-3 py-1.5 rounded-md text-sm transition-colors"
-          :class="activeEditorTab === t.key ? 'bg-blue-50 text-brand font-medium' : 'text-text-secondary hover:text-text-primary hover:bg-surface-bg'"
-          @click="activeEditorTab = t.key">
-          {{ t.label }}
-        </button>
-        <div class="ml-auto flex items-center gap-2">
-          <button @click="saveCurrentToStore" class="flex items-center gap-1.5 px-3 py-1.5 text-sm text-white bg-green-600 rounded-lg hover:bg-green-700 transition-colors">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
+      <!-- 顶部工具栏 -->
+      <div class="h-11 bg-surface-card border-b border-border flex items-center justify-between px-4 shrink-0">
+        <div class="flex items-center gap-1">
+          <div class="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5">
+            <button
+              v-for="tab in editorTabs"
+              :key="tab.key"
+              @click="activeEditorTab = tab.key"
+              class="px-3 py-1.5 text-xs font-medium rounded-md transition-all"
+              :class="activeEditorTab === tab.key ? 'bg-white text-text-primary shadow-sm' : 'text-text-secondary hover:text-text-primary'"
+            >{{ tab.label }}</button>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <button
+            @click="saveFile"
+            class="flex items-center gap-1.5 px-3 py-1.5 bg-brand text-white rounded-md text-xs font-medium hover:bg-brand/90 transition-colors"
+          >
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
             保存
           </button>
-          <button @click="showExportModal = true" class="flex items-center gap-1.5 px-3 py-1.5 text-sm text-white bg-brand rounded-lg hover:bg-blue-600 transition-colors">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-            导出组件
+          <button
+            @click="showExportModal = true"
+            class="flex items-center gap-1.5 px-3 py-1.5 border border-border text-text-primary rounded-md text-xs font-medium hover:bg-gray-50 transition-colors"
+          >
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+            导出
           </button>
         </div>
       </div>
 
-      <!-- 编辑内容区 + 右侧预览 -->
-      <div class="flex-1 flex min-h-0">
-        <!-- 编辑面板 -->
-        <div class="flex-1 overflow-y-auto p-4 min-w-0">
-          <!-- 文本多语言 -->
-          <div v-if="activeEditorTab === 'i18n'">
-            <div class="flex items-center justify-between mb-4">
-              <h2 class="text-sm font-semibold text-text-primary">多语言翻译表</h2>
-              <button @click="addI18nKey" class="flex items-center gap-1 px-3 py-1.5 text-sm text-brand border border-brand/30 rounded-lg hover:bg-blue-50 transition-colors">
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                添加文本
-              </button>
-            </div>
-            <!-- 语言 Tab -->
-            <div class="flex items-center gap-1 mb-3 flex-wrap">
-              <button v-for="lang in availableLanguages" :key="lang.code"
-                class="px-2.5 py-1 text-xs rounded-md border transition-colors"
-                :class="activeLang === lang.code ? 'border-brand bg-blue-50 text-brand font-medium' : 'border-border text-text-secondary hover:bg-surface-bg'"
-                @click="activeLang = lang.code">
-                {{ lang.code }}
-              </button>
-            </div>
-            <div class="bg-surface-card rounded-lg border border-border overflow-hidden">
-              <div class="grid grid-cols-[120px_1fr_36px] gap-0">
-                <div class="px-3 py-2 text-xs font-medium text-text-secondary bg-surface-bg border-b border-border">Key</div>
-                <div class="px-3 py-2 text-xs font-medium text-text-secondary bg-surface-bg border-b border-border">{{ activeLang }} 翻译</div>
-                <div class="px-3 py-2 text-xs font-medium text-text-secondary bg-surface-bg border-b border-border"></div>
-                <template v-for="(entry, idx) in i18nEntries" :key="entry.key">
-                  <div class="px-3 py-1.5 border-b border-border last:border-b-0 flex items-center">
-                    <code class="text-xs font-mono text-text-primary">{{ entry.key }}</code>
-                  </div>
-                  <div class="px-3 py-1.5 border-b border-border last:border-b-0 border-l border-border">
-                    <input :value="(entry as any)[activeLang]" @input="updateI18n(idx, activeLang, ($event.target as HTMLInputElement).value)"
-                      class="w-full px-2 py-1 text-sm border border-border rounded bg-surface-bg text-text-primary placeholder-text-secondary/50" :placeholder="'输入 ' + activeLang + ' 翻译'" />
-                  </div>
-                  <div class="px-1 py-1.5 border-b border-border last:border-b-0 border-l border-border flex items-center justify-center">
-                    <button @click="removeI18nKey(idx)" class="p-1 rounded hover:bg-red-50 text-text-secondary hover:text-red-500 transition-colors">
-                      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-                    </button>
-                  </div>
-                </template>
-              </div>
-            </div>
-          </div>
-
-          <!-- 颜色调整 -->
-          <div v-if="activeEditorTab === 'color'">
-            <h2 class="text-sm font-semibold text-text-primary mb-4">颜色变量调整</h2>
-            <div class="space-y-3">
-              <div v-for="cv in colorVars" :key="cv.name" class="flex items-center gap-3 bg-surface-card rounded-lg px-4 py-3 border border-border">
-                <div class="w-7 h-7 rounded border border-border shrink-0" :style="{ backgroundColor: cv.value }" />
-                <div class="flex-1 min-w-0">
-                  <span class="text-sm font-mono text-text-primary">{{ cv.name }}</span>
-                  <span class="text-xs text-text-secondary ml-2">{{ cv.value }}</span>
-                </div>
-                <select :value="cv.value" @change="replaceColor(cv.name, ($event.target as HTMLSelectElement).value)"
-                  class="px-2 py-1 text-xs border border-border rounded bg-surface-bg text-text-primary">
-                  <option value="">自定义</option>
-                  <option v-for="pc in presetColors" :key="pc.value" :value="pc.value">{{ pc.label }}</option>
-                </select>
-                <input type="color" :value="cv.value" @input="updateColorVar(cv.name, ($event.target as HTMLInputElement).value)"
-                  class="w-7 h-7 rounded cursor-pointer border border-border p-0.5 shrink-0" />
-              </div>
-            </div>
-          </div>
-
-          <!-- 事件绑定 -->
-          <div v-if="activeEditorTab === 'event'">
-            <h2 class="text-sm font-semibold text-text-primary mb-1">EventBus 事件绑定</h2>
-            <p class="text-xs text-text-secondary mb-4">配置组件模板元素的点击/双击事件，绑定到 EventBus</p>
-            <div class="bg-surface-card rounded-lg border border-border p-4 space-y-4">
-              <div class="flex items-center gap-3">
-                <label class="text-sm text-text-primary shrink-0">EventBus 名称</label>
-                <input v-model="eventBusName" class="flex-1 px-3 py-1.5 text-sm border border-border rounded bg-surface-bg text-text-primary font-mono" placeholder="如 $emit" />
-              </div>
-              <div class="flex items-center gap-3">
-                <label class="text-sm text-text-primary shrink-0">事件类型</label>
-                <select v-model="defaultEventType" class="px-3 py-1.5 text-sm border border-border rounded bg-surface-bg text-text-primary">
-                  <option value="click">click（单击）</option>
-                  <option value="dblclick">dblclick（双击）</option>
-                </select>
-              </div>
-              <div>
-                <p class="text-xs text-text-secondary mb-2">点击下方按钮激活选取模式，然后在右侧预览区点击选择要绑定的元素</p>
-                <button @click="startPicker" :disabled="pickerActive"
-                  class="flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-lg transition-colors"
-                  :class="pickerActive ? 'bg-green-50 text-success border border-green-300 cursor-not-allowed' : 'text-white bg-brand hover:bg-blue-600'">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"/></svg>
-                  {{ pickerActive ? '选取中...' : '添加 EventBus' }}
-                </button>
-              </div>
-              <!-- 选取操作区 -->
-              <div v-if="selectedElInfo" class="bg-blue-50 rounded-lg p-3 border border-blue-200 space-y-2">
-                <div class="flex items-center gap-2">
-                  <span class="text-xs font-medium text-brand">已选中：</span>
-                  <code class="text-xs font-mono bg-white px-1.5 py-0.5 rounded border border-blue-200">{{ selectedElInfo.tag }}</code>
-                  <code class="text-xs text-text-secondary">{{ selectedElInfo.id }}</code>
-                </div>
-                <div class="flex items-center gap-2">
-                  <button @click="confirmBinding" class="px-3 py-1 text-xs text-white bg-brand rounded hover:bg-blue-600 transition-colors">确认绑定</button>
-                  <button @click="resetPicker" class="px-3 py-1 text-xs text-text-secondary border border-border rounded hover:bg-surface-bg transition-colors">重选</button>
-                  <button @click="cancelPicker" class="px-3 py-1 text-xs text-text-secondary border border-border rounded hover:bg-red-50 hover:text-red-500 transition-colors">取消</button>
-                </div>
-              </div>
+      <!-- 主内容：上沙箱 + 下标签 -->
+      <div class="flex-1 flex flex-col min-h-0">
+        <!-- ====== 上：沙箱预览（主区域） ====== -->
+        <div class="flex-1 min-h-[300px] border-b border-border overflow-hidden">
+          <PreviewSandbox
+            v-if="sandboxComponentDef || !activeFileId"
+            :componentDef="sandboxComponentDef"
+            :styles="sandboxCss"
+            :mockProps="sandboxMockProps"
+            :mockTranslations="sandboxTranslations"
+          />
+          <div v-else class="h-full flex items-center justify-center text-sm text-text-secondary/50">
+            <div class="text-center">
+              <svg class="w-12 h-12 mx-auto mb-3 text-gray-200" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M15 10l4.553-2.276A1 1 0 0 1 21 8.618v6.764a1 1 0 0 1-1.447.894L15 14M5 18h8a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2z"/></svg>
+              <p>粘贴代码到下方「代码编辑」标签</p>
+              <p class="text-xs mt-1">点击「预览」按钮即可展示</p>
             </div>
           </div>
         </div>
 
-        <!-- 右侧实时预览 -->
-        <aside class="w-80 bg-surface-card border-l border-border flex flex-col shrink-0">
-          <div class="px-4 py-2.5 border-b border-border flex items-center justify-between shrink-0">
-            <span class="text-xs font-medium uppercase tracking-wider text-text-secondary">实时预览</span>
-            <div class="flex items-center gap-1">
-              <button v-for="mode in previewModes" :key="mode.key"
-                class="p-1 rounded transition-colors"
-                :class="previewMode === mode.key ? 'bg-blue-50 text-brand' : 'text-text-secondary hover:text-text-primary hover:bg-surface-bg'"
-                :title="mode.label" @click="previewMode = mode.key">
-                <component :is="mode.icon" class="w-4 h-4" />
-              </button>
-              <!-- 沙箱模式切换 -->
-              <span class="w-px h-4 bg-border mx-1"></span>
-              <button class="px-2 py-1 text-xs rounded transition-colors"
-                :class="sandboxMode ? 'bg-brand text-white' : 'text-text-secondary hover:text-text-primary hover:bg-surface-bg'"
-                @click="toggleSandboxMode">
-                {{ sandboxMode ? '组件沙箱' : '静态预览' }}
-              </button>
-            </div>
-          </div>
-          <div class="flex-1 overflow-y-auto p-4" ref="previewRef">
-            <!-- 组件沙箱模式 -->
-            <SandboxPreviewPanel v-if="sandboxMode" />
-            <!-- 静态预览模式 -->
-            <div v-else id="preview-component"
-              class="border border-border rounded-lg overflow-hidden transition-all mx-auto"
-              :class="previewWidthClass">
-              <div class="bg-gradient-to-r from-blue-600 to-blue-500 px-4 py-3 flex items-center gap-3"
-                data-el-id="header" :style="{ backgroundColor: previewHeaderBg }">
-                <div class="w-7 h-7 rounded-lg bg-white/20 flex items-center justify-center text-white text-xs font-bold" data-el-id="header-icon">U</div>
-                <div class="flex-1">
-                  <div class="text-sm font-medium text-white" data-el-id="header-title">{{ getI18nText('title') }}</div>
-                  <div class="text-xs text-blue-100" data-el-id="header-desc">{{ getI18nText('description') }}</div>
-                </div>
-                <button class="px-2.5 py-1 text-xs bg-white/20 text-white rounded-md hover:bg-white/30 transition-colors" data-el-id="header-btn">{{ getI18nText('btn_submit') }}</button>
-              </div>
-              <div class="p-4 space-y-3" :style="{ backgroundColor: previewBg }">
-                <div class="flex items-center gap-3" data-el-id="row-1">
-                  <div class="w-10 h-10 rounded-full bg-gray-200 shrink-0" data-el-id="avatar" />
-                  <div class="flex-1 space-y-1.5">
-                    <div class="h-3 bg-gray-200 rounded w-3/5" data-el-id="skeleton-1" />
-                    <div class="h-2.5 bg-gray-100 rounded w-2/5" data-el-id="skeleton-2" />
-                  </div>
-                  <span class="px-2 py-0.5 text-xs rounded-full bg-green-50 text-success" data-el-id="status-badge">Active</span>
-                </div>
-                <div class="border-t border-border pt-3 grid grid-cols-3 gap-2" data-el-id="stats-row">
-                  <div v-for="s in stats" :key="s.label" class="text-center p-2 rounded-lg bg-gray-50" :data-el-id="'stat-' + s.key">
-                    <div class="text-base font-semibold text-text-primary">{{ s.value }}</div>
-                    <div class="text-xs text-text-secondary">{{ s.label }}</div>
-                  </div>
-                </div>
+        <!-- ====== 下：标签内容 ====== -->
+        <div class="flex-1 min-h-[200px] overflow-y-auto bg-white">
+          <!-- 代码编辑 Tab -->
+          <div v-show="activeEditorTab === 'code'" class="h-full flex flex-col">
+            <div class="flex items-center justify-between px-4 py-2 border-b border-border shrink-0">
+              <span class="text-xs font-semibold text-text-primary">SFC 代码编辑</span>
+              <div class="flex items-center gap-2">
+                <button
+                  @click="previewFromCode"
+                  class="flex items-center gap-1.5 px-3 py-1.5 bg-brand text-white rounded-md text-xs font-medium hover:bg-brand/90 transition-colors"
+                >
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0 0 10 9.87v4.263a1 1 0 0 0 1.555.832l3.197-2.132a1 1 0 0 0 0-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0z"/></svg>
+                  预览
+                </button>
               </div>
             </div>
+            <div class="flex-1 p-4">
+              <textarea
+                v-model="codeEditorContent"
+                @paste="onCodePaste"
+                @input="onCodeChange"
+                class="w-full h-full font-mono text-sm p-4 border border-border rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand bg-white text-text-primary"
+                placeholder="在此粘贴或编辑 .vue 组件代码 ..."
+                spellcheck="false"
+              ></textarea>
+            </div>
           </div>
-        </aside>
+
+          <!-- 多语言 Tab -->
+          <div v-show="activeEditorTab === 'i18n'" class="p-4 h-full overflow-y-auto">
+            <div class="flex items-center justify-between mb-3">
+              <div>
+                <h3 class="text-sm font-semibold text-text-primary">文本多语言</h3>
+                <p class="text-xs text-text-secondary mt-0.5">自动从代码中提取 $t('key')，共 {{ i18nKeys.length }} 个</p>
+              </div>
+              <div class="flex items-center gap-2">
+                <select v-model="editLang" class="text-xs border border-border rounded px-2 py-1 bg-white text-text-primary focus:outline-none focus:ring-2 focus:ring-brand/20">
+                  <option v-for="lang in languages" :key="lang.key" :value="lang.key">{{ lang.label }}</option>
+                </select>
+                <button
+                  @click="reExtractI18n"
+                  class="text-xs px-3 py-1.5 border border-border rounded-md text-text-secondary hover:bg-gray-50 transition-colors"
+                >
+                  从代码重新提取
+                </button>
+                <button
+                  @click="fillAllLanguages"
+                  class="text-xs px-3 py-1.5 bg-brand/10 text-brand rounded-md hover:bg-brand/20 transition-colors"
+                >
+                  一键填充 (预留)
+                </button>
+              </div>
+            </div>
+
+            <div class="overflow-x-auto">
+              <table class="w-full text-xs">
+                <thead>
+                  <tr class="border-b border-border">
+                    <th class="text-left py-2 px-3 text-text-secondary font-medium w-1/3">$t('Key')</th>
+                    <th class="text-left py-2 px-3 text-text-secondary font-medium">{{ getLanguageLabel(editLang) }}</th>
+                    <th class="text-left py-2 px-3 text-text-secondary font-medium w-16">操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr v-for="(entry, idx) in filteredI18nEntries" :key="entry.key" class="border-b border-border/50 hover:bg-gray-50/50">
+                    <td class="py-2 px-3">
+                      <code class="text-brand bg-brand/5 px-1.5 py-0.5 rounded text-[11px]">$t('{{ entry.key }}')</code>
+                    </td>
+                    <td class="py-2 px-3">
+                      <input
+                        v-model="entry.values[editLang]"
+                        :placeholder="editLang === 'zh' ? '输入翻译' : '待翻译'"
+                        class="w-full px-2 py-1.5 border border-border rounded-md bg-white text-text-primary placeholder:text-text-secondary/40 focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand transition-all"
+                      />
+                    </td>
+                    <td class="py-2 px-3">
+                      <button
+                        @click="removeI18nKey(idx)"
+                        class="text-gray-300 hover:text-red-400 transition-colors"
+                        title="移除此 key"
+                      >
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                      </button>
+                    </td>
+                  </tr>
+                  <tr v-if="filteredI18nEntries.length === 0">
+                    <td colspan="3" class="py-8 text-center text-text-secondary/50">
+                      <p>未从代码中提取到 $t('key')</p>
+                      <p class="text-xs mt-1">在代码编辑器中使用 $t('你的文本') 后重新提取</p>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 颜色调整 Tab -->
+          <div v-show="activeEditorTab === 'color'" class="p-4 h-full overflow-y-auto">
+            <div class="flex items-center justify-between mb-3">
+              <div>
+                <h3 class="text-sm font-semibold text-text-primary">颜色变量调整</h3>
+                <p class="text-xs text-text-secondary mt-0.5">自动从代码中提取颜色引用，共 {{ extractedColors.length }} 项</p>
+              </div>
+              <button
+                @click="reExtractColors"
+                class="text-xs px-3 py-1.5 border border-border rounded-md text-text-secondary hover:bg-gray-50 transition-colors"
+              >
+                从代码重新提取
+              </button>
+            </div>
+
+            <div class="space-y-2">
+              <!-- 按类型分组 -->
+              <div v-for="group in colorGroups" :key="group.label" class="mb-4">
+                <h4 class="text-xs font-medium text-text-secondary mb-2 flex items-center gap-2">
+                  <span class="w-1.5 h-1.5 rounded-full" :class="group.badgeClass"></span>
+                  {{ group.label }} ({{ group.items.length }})
+                </h4>
+
+                <div class="grid grid-cols-2 gap-2">
+                  <div
+                    v-for="(item, _idx) in group.items"
+                    :key="_idx"
+                    class="flex items-center gap-2 px-3 py-2 bg-gray-50 rounded-lg border border-border/50"
+                  >
+                    <!-- 色块预览 -->
+                    <div
+                      class="w-7 h-7 rounded-md border border-border/50 shrink-0"
+                      :style="{ backgroundColor: isHexColor(item.value) ? item.value : tailwindToHex(item.value) }"
+                    ></div>
+
+                    <div class="flex-1 min-w-0">
+                      <code class="text-[11px] text-text-primary truncate block">{{ item.original }}</code>
+                      <span v-if="item.type === 'tailwind'" class="text-[10px] text-text-secondary">{{ item.tailwindCategory }} 类</span>
+                    </div>
+
+                    <input
+                      type="color"
+                      :value="isHexColor(item.value) ? item.value : '#2F6BFF'"
+                      @input="onColorChange(item, ($event.target as HTMLInputElement).value)"
+                      class="w-6 h-6 p-0 border-0 rounded cursor-pointer shrink-0"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div v-if="extractedColors.length === 0" class="py-8 text-center text-text-secondary/50">
+                <p>未从代码中提取到颜色</p>
+                <p class="text-xs mt-1">在代码编辑器中粘贴包含颜色值的代码后重新提取</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- 事件绑定 Tab -->
+          <div v-show="activeEditorTab === 'event'" class="p-4 h-full overflow-y-auto">
+            <div class="flex items-center justify-between mb-3">
+              <h3 class="text-sm font-semibold text-text-primary">事件绑定</h3>
+              <div class="flex items-center gap-2">
+                <label class="text-xs text-text-secondary">EventBus 名称:</label>
+                <input
+                  v-model="eventBusName"
+                  class="w-28 px-2 py-1 border border-border rounded text-xs bg-white text-text-primary focus:outline-none focus:ring-2 focus:ring-brand/20 focus:border-brand"
+                  placeholder="$EventBus"
+                />
+              </div>
+            </div>
+
+            <!-- 选取器模式 -->
+            <div class="flex items-center gap-2 mb-4">
+              <button
+                @click="startElementPicker"
+                class="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium transition-all"
+                :class="pickerActive ? 'bg-brand text-white ring-2 ring-brand/30' : 'border border-border text-text-secondary hover:bg-gray-50'"
+              >
+                <svg class="w-4 h-4" :class="pickerActive ? 'animate-pulse' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122"/></svg>
+                {{ pickerActive ? '选取中... 点击预览中的元素' : '选取元素绑定' }}
+              </button>
+              <span v-if="pickerActive" class="text-xs text-yellow-600 animate-pulse">🟡 鼠标移到预览元素上高亮，点击选定</span>
+            </div>
+
+            <!-- 临时选取状态 -->
+            <div v-if="pendingBinding" class="flex items-center gap-3 mb-4 p-3 bg-brand/5 border border-brand/20 rounded-lg">
+              <div class="flex items-center gap-2 text-xs text-text-primary">
+                <svg class="w-4 h-4 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"/></svg>
+                <span>已选定: <code class="font-mono bg-white px-1 py-0.5 rounded border border-border">{{ pendingBinding.tagName || 'div' }}</code></span>
+              </div>
+              <div class="flex items-center gap-2 ml-auto">
+                <select v-model="pendingBinding.event" class="text-xs border border-border rounded px-2 py-1 bg-white text-text-primary">
+                  <option value="click">@click</option>
+                  <option value="dblclick">@dblclick</option>
+                </select>
+                <button @click="confirmBinding" class="px-3 py-1.5 bg-success text-white rounded-md text-xs font-medium hover:opacity-90 transition-opacity">确认</button>
+                <button @click="cancelBinding" class="px-3 py-1.5 border border-border text-text-secondary rounded-md text-xs hover:bg-gray-50 transition-colors">取消</button>
+                <button @click="restartPicker" class="px-3 py-1.5 border border-border text-text-secondary rounded-md text-xs hover:bg-gray-50 transition-colors">重选</button>
+              </div>
+            </div>
+
+            <!-- 绑定列表 -->
+            <div class="border border-border rounded-lg overflow-hidden">
+              <div class="px-3 py-2 bg-gray-50 border-b border-border text-xs font-medium text-text-secondary">已绑定事件</div>
+              <div v-for="(binding, _idx) in bindings" :key="_idx"
+                class="flex items-center gap-3 px-3 py-2.5 border-b border-border/50 last:border-0 hover:bg-gray-50/50 transition-colors"
+                @mouseenter="highlightBinding(_idx)"
+                @mouseleave="clearBindingHighlight(_idx)"
+              >
+                <span class="w-5 h-5 flex items-center justify-center rounded-full bg-yellow-100 text-yellow-600 text-xs font-bold">{{ _idx + 1 }}</span>
+                <div class="flex-1 min-w-0">
+                  <code class="text-xs text-text-primary font-mono">{{ binding.elementTag || 'div' }}</code>
+                  <span class="text-brand text-xs ml-2">@{{ binding.event || 'click' }}</span>
+                  <span v-if="binding.elementId" class="text-[10px] text-text-secondary ml-2">#{{ binding.elementId }}</span>
+                </div>
+                <div class="flex items-center gap-1">
+                  <button
+                    @click="editBindingEvent(_idx)"
+                    class="px-2 py-1 text-[10px] text-text-secondary border border-border rounded hover:bg-white transition-colors"
+                  >
+                    编辑
+                  </button>
+                  <button @click="removeBinding(_idx)" class="px-2 py-1 text-[10px] text-red-300 hover:text-red-500 border border-border rounded hover:bg-white transition-colors">
+                    删除
+                  </button>
+                </div>
+              </div>
+              <div v-if="bindings.length === 0" class="py-6 text-center text-xs text-text-secondary/50">
+                暂无事件绑定
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- 导出 Modal -->
-    <div v-if="showExportModal" class="fixed inset-0 bg-black/30 flex items-center justify-center z-[100]" @click.self="showExportModal = false">
-      <div class="bg-surface-card rounded-xl shadow-xl w-[720px] max-w-[90vw] max-h-[80vh] flex flex-col">
-        <div class="flex items-center justify-between px-5 py-3 border-b border-border shrink-0">
-          <h3 class="text-sm font-semibold text-text-primary">导出 Vue 组件</h3>
-          <button @click="showExportModal = false" class="p-1 rounded hover:bg-surface-bg text-text-secondary transition-colors">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+    <!-- ====== 导出弹窗 ====== -->
+    <div v-if="showExportModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/30" @click.self="showExportModal = false">
+      <div class="bg-white rounded-xl shadow-xl w-[640px] max-h-[80vh] flex flex-col" @click.stop>
+        <div class="flex items-center justify-between px-5 py-4 border-b border-border">
+          <h3 class="text-sm font-semibold text-text-primary">导出 .vue 组件</h3>
+          <button @click="showExportModal = false" class="text-gray-300 hover:text-text-primary transition-colors">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
           </button>
         </div>
         <div class="flex-1 overflow-y-auto p-5">
-          <pre class="text-xs font-mono bg-gray-900 text-green-400 rounded-lg p-4 overflow-x-auto leading-relaxed">{{ generatedVueCode }}</pre>
+          <textarea
+            :value="exportVueCode"
+            class="w-full h-80 font-mono text-xs p-4 border border-border rounded-lg resize-none bg-gray-50 text-text-primary focus:outline-none"
+            readonly
+            spellcheck="false"
+          ></textarea>
         </div>
-        <div class="flex items-center gap-2 px-5 py-3 border-t border-border shrink-0 justify-end">
-          <button @click="copyCode" class="px-4 py-2 text-sm text-text-secondary border border-border rounded-lg hover:bg-surface-bg transition-colors">复制代码</button>
-          <button @click="downloadVue" class="px-4 py-2 text-sm text-white bg-brand rounded-lg hover:bg-blue-600 transition-colors">下载 .vue</button>
+        <div class="flex items-center justify-end gap-2 px-5 py-3 border-t border-border bg-gray-50">
+          <button @click="copyExportCode" class="px-4 py-2 border border-border text-text-primary rounded-lg text-xs font-medium hover:bg-white transition-colors">
+            复制代码
+          </button>
+          <button @click="downloadExportFile" class="px-4 py-2 bg-brand text-white rounded-lg text-xs font-medium hover:bg-brand/90 transition-colors">
+            下载 .vue 文件
+          </button>
         </div>
       </div>
     </div>
@@ -259,387 +382,449 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed, watch } from 'vue'
-import type { I18nEntry, EventBinding, StoredComponent } from '../types'
+import { ref, computed, nextTick } from 'vue'
+import PreviewSandbox from '../components/PreviewSandbox.vue'
 import { useComponentStore } from '../composables/useComponentStore'
-import SandboxPreviewPanel from '../components/SandboxPreviewPanel.vue'
+import { parseSFC } from '../utils/parseSFC'
+import { extractI18nKeys, extractColors, type ExtractedColor } from '../utils/codeAnalysis'
 
-// === 共享存储 ===
-const {
-  componentFiles: storeComponentFiles,
-  saveComponent: storeSaveComponent,
-  getComponent: storeGetComponent,
-  removeComponent: storeRemoveComponent,
-} = useComponentStore()
+// ====== Store ======
+const { componentFiles: storeFiles, saveComponent, removeComponent } = useComponentStore()
 
-// === 文件列表 ===
-const activeFile = ref('')
-const sandboxMode = ref(false)
+// ====== 状态 ======
+const activeFileId = ref<string | null>(null)
+const activeEditorTab = ref('code') // 'code' | 'i18n' | 'color' | 'event'
 
-// 从 store 推导文件列表
-const componentFiles = computed(() => {
-  return storeComponentFiles.value.map(c => ({ name: c.name, id: c.id }))
-})
-
-// 当 activeFile 变化时，从 store 加载数据
-watch(activeFile, (name) => {
-  if (!name) return
-  const data = storeComponentFiles.value.find(c => c.name === name)
-  if (!data) return
-  // 加载 i18n
-  i18nEntries.length = 0
-  for (const entry of data.i18nEntries) {
-    i18nEntries.push({ ...entry })
-  }
-  // 加载颜色
-  colorVars.length = 0
-  for (const cv of data.colorVars) {
-    colorVars.push({ ...cv })
-  }
-  // 加载绑定
-  bindings.length = 0
-  for (const b of data.bindings) {
-    bindings.push({ ...b })
-  }
-  eventBusName.value = data.eventBusName
-})
-
-// === 编辑器 Tab ===
 const editorTabs = [
+  { key: 'code', label: '代码编辑' },
   { key: 'i18n', label: '文本多语言' },
   { key: 'color', label: '颜色调整' },
   { key: 'event', label: '事件绑定' },
 ]
-const activeEditorTab = ref('i18n')
 
-// === 多语言 ===
-const activeLang = ref('zh')
-const availableLanguages = [
-  { code: 'zh', name: '中文' },
-  { code: 'en', name: 'English' },
-  { code: 'vn', name: 'Tiếng Việt' },
-  { code: 'th', name: 'ไทย' },
-  { code: 'ph', name: 'Tagalog' },
+// ====== 代码编辑 ======
+const codeEditorContent = ref('')
+const i18nKeys = ref<string[]>([])
+const extractedColors = ref<ExtractedColor[]>([])
+
+// ====== 沙箱预览 ======
+const sandboxComponentDef = ref<any>(null)
+const sandboxCss = ref('')
+const sandboxMockProps = ref<Record<string, any>>({})
+const sandboxTranslations = ref<Record<string, string>>({})
+
+// ====== 多语言 ======
+interface I18nEntry {
+  key: string
+  values: Record<string, string>
+}
+
+const editLang = ref('zh')
+const i18nEntries = ref<I18nEntry[]>([])
+
+const languages = [
+  { key: 'zh', label: '中文' },
+  { key: 'en', label: 'English' },
+  { key: 'vn', label: 'Tiếng Việt' },
+  { key: 'th', label: 'ภาษาไทย' },
+  { key: 'ph', label: 'Filipino' },
 ]
 
-const i18nEntries = reactive<I18nEntry[]>([
-  { key: 'title', zh: '用户表格', en: 'User Table', vn: 'Bảng người dùng', th: 'ตารางผู้ใช้', ph: 'Talaan ng Gumagamit' },
-  { key: 'description', zh: '用户数据展示', en: 'User Data Display', vn: 'Hiển thị dữ liệu', th: 'แสดงข้อมูลผู้ใช้', ph: 'Pagpapakita ng Datos' },
-  { key: 'placeholder', zh: '请输入搜索关键词', en: 'Please enter search keywords', vn: 'Nhập từ khóa tìm kiếm', th: 'ป้อนคำค้นหา', ph: 'Mangyaring mag-input ng keyword' },
-  { key: 'btn_submit', zh: '提交', en: 'Submit', vn: 'Gửi', th: 'ส่ง', ph: 'Isumite' },
-  { key: 'btn_cancel', zh: '取消', en: 'Cancel', vn: 'Hủy', th: 'ยกเลิก', ph: 'Kanselahin' },
-  { key: 'error_msg', zh: '加载失败，请重试', en: 'Load failed, please retry', vn: 'Tải thất bại', th: 'โหลดไม่สำเร็จ', ph: 'Nabigo ang pag-load' },
-])
-
-function addI18nKey() {
-  const key = prompt('请输入 Key 名称（如 btn_save）：')
-  if (!key) return
-  if (i18nEntries.find(e => e.key === key)) { alert('Key 已存在'); return }
-  i18nEntries.push({ key, zh: '', en: '', vn: '', th: '', ph: '' })
+function getLanguageLabel(key: string) {
+  return languages.find(l => l.key === key)?.label || key
 }
 
-function removeI18nKey(idx: number) {
-  if (i18nEntries.length <= 1) return
-  i18nEntries.splice(idx, 1)
-}
+const filteredI18nEntries = computed(() => i18nEntries.value)
 
-function updateI18n(idx: number, lang: string, value: string) {
-  ;(i18nEntries[idx] as any)[lang] = value
-}
+// ====== 颜色调整 ======
+const colorGroups = computed(() => {
+  const groups: { label: string; badgeClass: string; items: ExtractedColor[] }[] = []
 
-function getI18nText(key: string) {
-  const entry = i18nEntries.find(e => e.key === key)
-  if (!entry) return key
-  return (entry as any)[activeLang.value] || entry.zh || key
-}
+  const hexColors = extractedColors.value.filter(c => c.type === 'hex')
+  if (hexColors.length) groups.push({ label: 'Hex 颜色', badgeClass: 'bg-pink-400', items: hexColors })
 
-// === 颜色调整 ===
-interface ColorVariable {
-  name: string
-  value: string
-}
-const colorVars = reactive<ColorVariable[]>([
-  { name: 'primary', value: '#2F6BFF' },
-  { name: 'secondary', value: '#16A37B' },
-  { name: 'bg-card', value: '#FFFFFF' },
-  { name: 'text-body', value: '#152033' },
-  { name: 'border-light', value: '#E6EAF2' },
-])
+  const textColors = extractedColors.value.filter(c => c.tailwindCategory === 'text')
+  if (textColors.length) groups.push({ label: '文字颜色 (text-)', badgeClass: 'bg-blue-400', items: textColors })
 
-const presetColors = [
-  { label: '主色', value: '#2F6BFF' },
-  { label: '次级色', value: '#16A37B' },
-  { label: '文字色', value: '#152033' },
-  { label: '附属1', value: '#F59E0B' },
-  { label: '附属2', value: '#8B5CF6' },
-  { label: '附属3', value: '#E5484D' },
-  { label: '附属4', value: '#637089' },
-]
+  const bgColors = extractedColors.value.filter(c => c.tailwindCategory === 'bg')
+  if (bgColors.length) groups.push({ label: '背景颜色 (bg-)', badgeClass: 'bg-green-400', items: bgColors })
 
-function updateColorVar(name: string, value: string) {
-  const v = colorVars.find(c => c.name === name)
-  if (v) v.value = value
-}
+  const borderColors = extractedColors.value.filter(c => c.tailwindCategory === 'border')
+  if (borderColors.length) groups.push({ label: '边框颜色 (border-)', badgeClass: 'bg-yellow-400', items: borderColors })
 
-function replaceColor(name: string, value: string) {
-  if (!value) return
-  updateColorVar(name, value)
-}
+  const otherColors = extractedColors.value.filter(c => c.type === 'css-var' || c.tailwindCategory === 'other' || c.type === 'rgba')
+  if (otherColors.length) groups.push({ label: '其他颜色', badgeClass: 'bg-gray-400', items: otherColors })
 
-// 预览区颜色
-const previewHeaderBg = computed(() => {
-  const primary = colorVars.find(c => c.name === 'primary')
-  return primary?.value || '#2F6BFF'
-})
-const previewBg = computed(() => {
-  const bg = colorVars.find(c => c.name === 'bg-card')
-  return bg?.value || '#FFFFFF'
+  return groups
 })
 
-// === 预览 ===
-const previewMode = ref('desktop')
-const previewModes = [
-  { key: 'mobile', label: '手机', icon: 'span' },
-  { key: 'tablet', label: '平板', icon: 'span' },
-  { key: 'desktop', label: '桌面', icon: 'span' },
-]
-const previewWidthClass = computed(() => {
-  switch (previewMode.value) {
-    case 'mobile': return 'max-w-[320px]'
-    case 'tablet': return 'max-w-[600px]'
-    default: return 'max-w-full'
+function isHexColor(v: string) {
+  return /^#[0-9a-fA-F]{3,8}$/.test(v)
+}
+
+function tailwindToHex(className: string): string {
+  // 简化映射：常用的 Tailwind 颜色近似值
+  const map: Record<string, string> = {
+    'slate-500': '#64748b', 'gray-500': '#6b7280', 'blue-500': '#3b82f6',
+    'red-500': '#ef4444', 'green-500': '#22c55e', 'yellow-500': '#eab308',
+    'brand': '#2F6BFF', 'primary': '#2F6BFF',
   }
-})
+  for (const [key, val] of Object.entries(map)) {
+    if (className.includes(key)) return val
+  }
+  return '#2F6BFF'
+}
 
-const stats = [
-  { key: 'users', label: '用户', value: '1,284' },
-  { key: 'active', label: '活跃', value: '847' },
-  { key: 'growth', label: '增长', value: '+12%' },
-]
+function onColorChange(item: ExtractedColor, newHex: string) {
+  // 在代码编辑器中替换颜色
+  codeEditorContent.value = codeEditorContent.value.replace(item.original, newHex)
+  item.value = newHex
+  item.original = newHex
+  // 立即预览
+  previewFromCode()
+}
 
-// === 事件绑定 ===
-const eventBusName = ref('$emit')
-const defaultEventType = ref<'click' | 'dblclick'>('click')
+// ====== 事件绑定 ======
+interface BindingItem {
+  elementId: string
+  elementTag: string
+  event: string
+  eventBusEventName: string
+  selector: string
+}
+
+const bindings = ref<BindingItem[]>([])
+const eventBusName = ref('$EventBus')
+let bindingCounter = 0
+
+// 选取器状态
 const pickerActive = ref(false)
-const selectedElInfo = ref<{ tag: string; id: string } | null>(null)
-let bindIdCounter = 0
+const pendingBinding = ref<{
+  elementId: string
+  tagName: string
+  event: string
+  selector: string
+} | null>(null)
 
-const bindings = reactive<EventBinding[]>([])
-const hoveredBindingId = ref<number | null>(null)
-function startPicker() {
+function startElementPicker() {
   pickerActive.value = true
-  selectedElInfo.value = null
-}
+  // 在沙箱预览区域启用 hover 高亮 + click 选中
+  // 实际通过给 PreviewSandbox 容器添加事件监听
+  nextTick(() => {
+    const sandboxEl = document.querySelector('.preview-mount-root')
+    if (!sandboxEl) return
 
-function resetPicker() {
-  selectedElInfo.value = null
-}
+    const select = (e: MouseEvent) => {
+      if (!pickerActive.value) return
+      e.preventDefault()
+      e.stopPropagation()
+      const target = (e.target as HTMLElement).closest('[data-element-id]') as HTMLElement | null
+      if (!target || target === sandboxEl) return
 
-function cancelPicker() {
-  pickerActive.value = false
-  selectedElInfo.value = null
+      const elementId = target.dataset.elementId || ''
+      pendingBinding.value = {
+        elementId,
+        tagName: target.tagName.toLowerCase(),
+        event: 'click',
+        selector: `[data-element-id="${elementId}"]`,
+      }
+      pickerActive.value = false
+    }
+
+    const onMove = (e: MouseEvent) => {
+      if (!pickerActive.value) return
+      const target = (e.target as HTMLElement).closest('[data-element-id]') as HTMLElement | null
+      sandboxEl.querySelectorAll('.sb-picker-highlight').forEach(el => {
+        (el as HTMLElement).style.outline = ''
+      })
+      if (target && target !== sandboxEl) {
+        target.style.outline = '2px solid #FFD700'
+        target.style.outlineOffset = '1px'
+      }
+    }
+
+    sandboxEl.addEventListener('mousemove', onMove as EventListener)
+    sandboxEl.addEventListener('click', select as EventListener)
+
+    // 清理
+    const cleanup = () => {
+      sandboxEl.removeEventListener('mousemove', onMove as EventListener)
+      sandboxEl.removeEventListener('click', select as EventListener)
+      sandboxEl.querySelectorAll('.sb-picker-highlight').forEach(el => {
+        (el as HTMLElement).style.outline = ''
+      })
+    }
+    ;(window as any).__pickerCleanup = cleanup
+  })
 }
 
 function confirmBinding() {
-  if (!selectedElInfo.value) return
-  bindIdCounter++
-  bindings.push({
-    id: bindIdCounter,
-    elId: selectedElInfo.value.id,
-    elTag: selectedElInfo.value.tag,
-    eventType: defaultEventType.value,
-    eventBusName: eventBusName.value,
+  if (!pendingBinding.value) return
+  bindingCounter++
+  bindings.value.push({
+    elementId: pendingBinding.value.elementId,
+    elementTag: pendingBinding.value.tagName,
+    event: pendingBinding.value.event,
+    eventBusEventName: eventBusName.value,
+    selector: pendingBinding.value.selector,
   })
-  pickerActive.value = false
-  selectedElInfo.value = null
+  pendingBinding.value = null
 }
 
-function removeBinding(id: number) {
-  const idx = bindings.findIndex(b => b.id === id)
-  if (idx > -1) bindings.splice(idx, 1)
+function cancelBinding() {
+  pendingBinding.value = null
 }
 
-// 绑定清单 hover 联动高亮
-watch(hoveredBindingId, (id) => {
-  const previewEl = document.getElementById('preview-component')
-  if (!previewEl) return
-  // 清除所有高亮
-  previewEl.querySelectorAll('[data-el-id]').forEach(el => {
-    (el as HTMLElement).style.outline = ''
-  })
-  if (id === null) return
-  const binding = bindings.find(b => b.id === id)
-  if (!binding) return
-  const target = previewEl.querySelector(`[data-el-id="${binding.elId}"]`) as HTMLElement
-  if (target) {
-    target.style.outline = '2px solid #2F6BFF'
-    target.style.outlineOffset = '1px'
-    target.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+function restartPicker() {
+  pendingBinding.value = null
+  pickerActive.value = true
+  startElementPicker()
+}
+
+function removeBinding(idx: number) {
+  bindings.value.splice(idx, 1)
+}
+
+function editBindingEvent(idx: number) {
+  const current = bindings.value[idx].event
+  bindings.value[idx].event = current === 'click' ? 'dblclick' : 'click'
+}
+
+function highlightBinding(idx: number) {
+  // 沙箱中高亮对应元素
+}
+
+function clearBindingHighlight(idx: number) {
+  // 清除高亮
+}
+
+function removeI18nKey(idx: number) {
+  const entry = i18nEntries.value[idx]
+  if (!entry) return
+  i18nEntries.value.splice(idx, 1)
+  // 也从 codeEditor 中移除对应的 $t('key') 调用
+  codeEditorContent.value = codeEditorContent.value.replace(
+    new RegExp(`\\$t\\(\\s*['"]${entry.key}['"]\\s*\\)`, 'g'),
+    `'${entry.key}'`
+  )
+}
+
+// ====== 代码分析 ======
+function analyzeCode(code: string) {
+  // 提取 $t() keys
+  i18nKeys.value = extractI18nKeys(code)
+
+  // 同步 i18nEntries：保留已有翻译，新增缺失的 key
+  const existingMap = new Map<string, Record<string, string>>()
+  for (const entry of i18nEntries.value) {
+    existingMap.set(entry.key, entry.values)
   }
-})
+  i18nEntries.value = i18nKeys.value.map(key => ({
+    key,
+    values: existingMap.get(key) || { zh: '', en: '', vn: '', th: '', ph: '' },
+  }))
 
-// 选取模式 - 预览区点击
-// 使用 document click 监听
-if (typeof window !== 'undefined') {
-  document.addEventListener('click', (e) => {
-    if (!pickerActive.value) return
-    const target = (e.target as HTMLElement).closest('[data-el-id]') as HTMLElement
-    if (!target) return
-    // 确认是在预览组件内
-    if (!document.getElementById('preview-component')?.contains(target)) return
-    e.preventDefault()
-    e.stopPropagation()
-    const elId = target.getAttribute('data-el-id') || ''
-    const tag = target.tagName.toLowerCase()
-    selectedElInfo.value = { tag, id: elId }
-    // 高亮
-    document.getElementById('preview-component')?.querySelectorAll('[data-el-id]').forEach(el => {
-      (el as HTMLElement).style.outline = ''
-    })
-    target.style.outline = '2px solid #2F6BFF'
-    target.style.outlineOffset = '1px'
-  }, true)
+  // 提取颜色
+  extractedColors.value = extractColors(code)
 }
 
-// === 导出 ===
+function onCodePaste() {
+  nextTick(() => analyzeCode(codeEditorContent.value))
+}
+
+function onCodeChange() {
+  // 用户打字时不自动分析，只在明确操作时分析
+}
+
+function reExtractI18n() {
+  analyzeCode(codeEditorContent.value)
+  activeEditorTab.value = 'i18n'
+}
+
+function reExtractColors() {
+  analyzeCode(codeEditorContent.value)
+  activeEditorTab.value = 'color'
+}
+
+// ====== 预览 ======
+function previewFromCode() {
+  const code = codeEditorContent.value
+  if (!code.trim()) return
+
+  // 解析 SFC
+  const result = parseSFC(code)
+  if (result && result.componentDef) {
+    sandboxComponentDef.value = result.componentDef
+    sandboxCss.value = result.css
+
+    // 生成 mock 翻译
+    const mockTrans: Record<string, string> = {}
+    for (const entry of i18nEntries.value) {
+      mockTrans[entry.key] = entry.values[editLang.value] || entry.key
+    }
+    sandboxTranslations.value = mockTrans
+
+    // 自动选取
+    activeEditorTab.value = 'code'
+  }
+}
+
+// ====== 文件管理 ======
+function loadFile(file: any) {
+  activeFileId.value = file.id
+  codeEditorContent.value = [
+    file.template ? '<' + 'template>\n' + file.template + '\n</' + 'template>' : '',
+    file.script ? '<' + 'script>\n' + file.script + '\n<' + '/script>' : '',
+    file.style ? '<' + 'style scoped>\n' + file.style + '\n<' + '/style>' : '',
+  ].filter(Boolean).join('\n\n')
+
+  if (file.i18nEntries) {
+    i18nEntries.value = JSON.parse(JSON.stringify(file.i18nEntries))
+  }
+  if (file.bindings) {
+    bindings.value = JSON.parse(JSON.stringify(file.bindings))
+  }
+  if (file.colorVars) {
+    extractedColors.value = JSON.parse(JSON.stringify(file.colorVars))
+  }
+  analyzeCode(codeEditorContent.value)
+  previewFromCode()
+}
+
+function createNewFile() {
+  const now = Date.now()
+  const file = {
+    id: `file_${now}`,
+    name: `NewComponent_${now % 1000}`,
+    description: '新建组件',
+    version: '1.0.0',
+    updatedAt: new Date().toISOString(),
+    template: '',
+    script: `export default {\n  name: 'NewComponent',\n  data() { return {} },\n  methods: {}\n}`,
+    style: '',
+    i18nEntries: [],
+    bindings: [],
+    colors: [],
+    eventBusName: '$EventBus',
+  }
+  saveComponent(file)
+  loadFile(file)
+}
+
+function saveFile() {
+  if (!activeFileId.value) return
+
+  // 重新分析代码
+  analyzeCode(codeEditorContent.value)
+
+  // 解析 SFC
+  const result = parseSFC(codeEditorContent.value)
+
+  const updated = {
+    id: activeFileId.value,
+    name: storeFiles.value.find(f => f.id === activeFileId.value)?.name || 'Unnamed',
+    description: storeFiles.value.find(f => f.id === activeFileId.value)?.description || '',
+    version: storeFiles.value.find(f => f.id === activeFileId.value)?.version || '1.0.0',
+    updatedAt: new Date().toISOString(),
+    template: result?.componentDef?.template || '',
+    script: extractScript(codeEditorContent.value),
+    style: result?.css || '',
+    i18nEntries: JSON.parse(JSON.stringify(i18nEntries.value)),
+    bindings: JSON.parse(JSON.stringify(bindings.value)),
+    colors: JSON.parse(JSON.stringify(extractedColors.value)),
+    eventBusName: eventBusName.value,
+  }
+  saveComponent(updated)
+}
+
+function deleteFile(id: string) {
+  if (confirm('确定删除此组件？')) {
+    removeComponent(id)
+    if (activeFileId.value === id) {
+      activeFileId.value = null
+      codeEditorContent.value = ''
+      sandboxComponentDef.value = null
+      sandboxCss.value = ''
+      i18nEntries.value = []
+    }
+  }
+}
+
+function extractScript(code: string): string {
+  const match = code.match(new RegExp('<script[^>]*>([\\s\\S]*?)<\\/script>'))
+  return match ? match[1].trim() : ''
+}
+
+// ====== 导出 ======
 const showExportModal = ref(false)
 
-const generatedVueCode = computed(() => {
-  // 生成 template
-  let template = `<template>\n  <div class="component-wrapper">\n`
-  template += `    <div class="header">\n`
-  template += `      <span>{{ getI18nText('title') }}</span>\n`
-  template += `      <button>{{ getI18nText('btn_submit') }}</button>\n`
-  template += `    </div>\n  </div>\n</template>\n\n`
+const exportVueCode = computed(() => {
+  const template = sandboxComponentDef.value?.template || ''
+  const code = codeEditorContent.value
+  const scriptRaw = extractScript(code)
+  const styleRaw = sandboxCss.value
 
-  // 生成 script
-  let script = `<script setup lang="ts">\n`
-  // EventBus 注入
-  for (const b of bindings) {
-    script += `// EventBus binding: ${b.elTag}#${b.elId} (${b.eventType})\n`
-  }
-  script += `\nconst i18n = {\n`
-  for (const lang of ['zh', 'en', 'vn', 'th', 'ph']) {
-    script += `  ${lang}: {\n`
-    for (const entry of i18nEntries) {
-      const val = (entry as any)[lang] || entry.zh
-      script += `    ${entry.key}: '${val}',\n`
+  // 生成事件绑定注入：mounted 中注册 EventBus
+  let eventBusInjections = ''
+  if (bindings.value.length > 0) {
+    eventBusInjections = bindings.value
+      .map(b => {
+        const handlerName = `__eb_${b.event}_${b.elementId}`
+        return `  ${handlerName}() {\n    ${eventBusName.value}.$emit('${b.elementTag}:${b.event}', {\n      elementId: '${b.elementId}',\n      event: '${b.event}',\n      timestamp: Date.now(),\n    })\n  }`
+      })
+      .join(',\n')
+
+    // 构建 mounted 代码
+    const mountBindings = bindings.value
+      .map(b => `    const el = this.$el?.querySelector('[data-element-id="${b.elementId}"]'); if (el) el.addEventListener('${b.event}', this.__eb_${b.event}_${b.elementId})`)
+      .join('\n')
+    const beforeDestroyBindings = bindings.value
+      .map(b => `    const el = this.$el?.querySelector('[data-element-id="${b.elementId}"]'); if (el) el.removeEventListener('${b.event}', this.__eb_${b.event}_${b.elementId})`)
+      .join('\n')
+
+    // 注入到 script 中
+    let finalScript = scriptRaw
+    if (finalScript.includes('mounted()')) {
+      finalScript = finalScript.replace('mounted()', `mounted() {\n${mountBindings}\n`)
+    } else if (finalScript.includes('mounted:')) {
+      finalScript = finalScript.replace('mounted:', `mounted: function() {\n${mountBindings}\n  },`)
     }
-    script += `  },\n`
+
+    if (finalScript.includes('beforeDestroy()')) {
+      finalScript = finalScript.replace('beforeDestroy()', `beforeDestroy() {\n${beforeDestroyBindings}\n`)
+    } else {
+      // 添加到 methods 后
+      finalScript = finalScript.replace(/(\s*\})$/, `,\n  beforeDestroy() {\n${beforeDestroyBindings}\n  }\n$1`)
+    }
+
+    // 添加方法
+    finalScript = finalScript.replace(/(\s*\})$/, `,\n${eventBusInjections}\n$1`)
+
+    return '<' + 'template>\n' + template + '\n</' + 'template>\n\n<' + 'script>\n' + finalScript + '\n<' + '/script>\n\n<' + 'style scoped>\n' + styleRaw + '\n<' + '/style>'
   }
-  script += `}\n\n`
-  script += `function getI18nText(key: string) {\n`
-  script += `  const lang = (window as any).$i18n?.local || 'zh'\n`
-  script += `  return i18n[lang]?.[key] || i18n['zh'][key] || key\n`
-  script += `}\n\n`
 
-  // 主题 CSS 变量
-  script += `const themeVars = {\n`
-  for (const cv of colorVars) {
-    script += `  '--${cv.name}': '${cv.value}',\n`
-  }
-  script += `}\n`
-
-  script += `<\/script>\n\n`
-
-  // 生成 style
-  let style = `<style scoped>\n`
-  style += `.component-wrapper {\n`
-  for (const cv of colorVars) {
-    style += `  --${cv.name}: ${cv.value};\n`
-  }
-  style += `}\n</style>`
-
-  return template + script + style
+  return '<' + 'template>\n' + template + '\n</' + 'template>\n\n<' + 'script>\n' + scriptRaw + '\n<' + '/script>\n\n<' + 'style scoped>\n' + styleRaw + '\n<' + '/style>'
 })
 
-function toggleSandboxMode() {
-  sandboxMode.value = !sandboxMode.value
+function copyExportCode() {
+  navigator.clipboard.writeText(exportVueCode.value)
+  alert('已复制到剪贴板')
 }
 
-function copyCode() {
-  navigator.clipboard.writeText(generatedVueCode.value).then(() => {
-    alert('代码已复制到剪贴板')
-  })
-}
-
-function downloadVue() {
-  const blob = new Blob([generatedVueCode.value], { type: 'text/plain' })
+function downloadExportFile() {
+  const name = storeFiles.value.find(f => f.id === activeFileId.value)?.name || 'component'
+  const blob = new Blob([exportVueCode.value], { type: 'text/plain' })
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
-  a.download = (activeFile.value || 'component') + '.vue'
+  a.download = `${name}.vue`
   a.click()
   URL.revokeObjectURL(url)
 }
 
-// === 保存到共享存储 ===
-function saveCurrentToStore() {
-  const name = activeFile.value.trim()
-  if (!name) {
-    const input = prompt('请输入组件名称：')
-    if (!input) return
-    activeFile.value = input
-  }
-
-  const existing = storeComponentFiles.value.find(c => c.name === activeFile.value)
-  const comp: StoredComponent = {
-    id: existing?.id || '',
-    name: activeFile.value,
-    description: existing?.description || '',
-    version: existing?.version || '1.0',
-    updatedAt: new Date().toISOString(),
-    template: '',
-    script: '',
-    style: '',
-    i18nEntries: [...i18nEntries],
-    colorVars: [...colorVars],
-    bindings: [...bindings],
-    eventBusName: eventBusName.value,
-  }
-
-  storeSaveComponent(comp)
-  alert('已保存 "' + comp.name + '" 到组件库')
-}
-
-function createNewFile() {
-  const name = prompt('请输入新组件名称（如 MyPanel.vue）：')
-  if (!name) return
-  // 清空编辑器
-  i18nEntries.length = 0
-  colorVars.length = 0
-  bindings.length = 0
-  // 初始化默认数据
-  activeFile.value = name
-  // 保存空模板到 store
-  const comp: StoredComponent = {
-    id: '',
-    name: name,
-    description: '新建组件',
-    version: '1.0',
-    updatedAt: new Date().toISOString(),
-    template: '',
-    script: '',
-    style: '',
-    i18nEntries: [],
-    colorVars: [
-      { name: 'primary', value: '#2F6BFF' },
-      { name: 'secondary', value: '#16A37B' },
-      { name: 'bg-card', value: '#FFFFFF' },
-      { name: 'text-body', value: '#152033' },
-      { name: 'border-light', value: '#E6EAF2' },
-    ],
-    bindings: [],
-    eventBusName: '$emit',
-  }
-  storeSaveComponent(comp)
-}
-
-function deleteCurrentFile() {
-  if (!activeFile.value) return
-  if (!confirm('删除 "' + activeFile.value + '" ？此操作不可撤销。')) return
-  const existing = storeComponentFiles.value.find(c => c.name === activeFile.value)
-  if (existing?.id) storeRemoveComponent(existing.id)
-  activeFile.value = componentFiles.value[0]?.name || ''
+// ====== 辅助 ======
+function fillAllLanguages() {
+  // 预留：AI 一键翻译
+  alert('AI 一键翻译功能对接中')
 }
 </script>

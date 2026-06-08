@@ -1,5 +1,5 @@
 // 共享组件存储 — 组件编辑器与搭建器共享数据
-import { ref, reactive } from 'vue'
+import { ref } from 'vue'
 import type { StoredComponent } from '../types'
 import { sendToPlatform, onPlatformMessage } from './usePostMessage'
 

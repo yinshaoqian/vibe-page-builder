@@ -52,7 +52,7 @@ export interface StoredComponent {
   script: string
   style: string
   i18nEntries: I18nEntry[]
-  colorVars: ColorVar[]
+  colors: Array<{ original: string; value: string; type: string; tailwindCategory?: string }>
   bindings: EventBinding[]
   eventBusName: string
 }
