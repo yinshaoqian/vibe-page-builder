@@ -234,16 +234,7 @@
             <div class="flex items-center justify-between px-4 py-2.5 border-b border-[#E6EAF2] bg-white">
               <span class="text-sm font-medium text-[#152033]">画布组件列表</span>
               <div class="flex items-center gap-3">
-                <!-- 缩放控件 -->
-                <div class="flex items-center gap-1 bg-[#F6F8FB] rounded-md px-1.5 py-0.5">
-                  <button @click.stop="zoomOut" class="p-0.5 rounded hover:bg-white text-[#637089] hover:text-[#152033]" title="缩小">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/></svg>
-                  </button>
-                  <span class="text-[10px] text-[#637089] w-8 text-center select-none">{{ zoomLevel }}%</span>
-                  <button @click.stop="zoomIn" class="p-0.5 rounded hover:bg-white text-[#637089] hover:text-[#152033]" title="放大">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-                  </button>
-                </div>
+                
                 <span class="text-[10px] text-[#637089]">{{ canvasItems.length }} 项</span>
               </div>
             </div>
@@ -301,6 +292,37 @@
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
           </button>
         </div>
+        <!-- ===== 浮动缩放控件（画布右下） ===== -->
+        <div class="absolute bottom-4 right-4 z-40 flex items-center gap-1 bg-white rounded-xl shadow-lg border border-[#E6EAF2] px-2.5 py-1.5 select-none">
+          <button @click="zoomOut" class="p-1 rounded hover:bg-[#F6F8FB] text-[#637089] hover:text-[#152033]" title="缩小">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/></svg>
+          </button>
+          <span class="text-xs text-[#637089] w-9 text-center font-medium select-none">{{ zoomLevel }}%</span>
+          <button @click="zoomIn" class="p-1 rounded hover:bg-[#F6F8FB] text-[#637089] hover:text-[#152033]" title="放大">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+          </button>
+          <span class="w-px h-4 bg-[#E6EAF2] mx-1"></span>
+          <button @click="resetZoom" class="text-[10px] px-1.5 py-0.5 rounded hover:bg-[#F6F8FB] text-[#637089] hover:text-[#152033]" title="重置缩放">重置</button>
+        </div>
+        <!-- ===== 小地图预览 ===== -->
+        <div v-if="canvasItems.length" class="absolute bottom-4 right-[208px] z-40 bg-white rounded-xl shadow-lg border border-[#E6EAF2] overflow-hidden select-none"
+          :style="{ width: minimapWidth + 'px', height: minimapHeight + 'px' }">
+          <div class="flex items-center justify-between px-2.5 py-1.5 border-b border-[#E6EAF2] bg-[#F6F8FB]">
+            <span class="text-[10px] font-medium text-[#637089]">小地图</span>
+            <span class="text-[9px] text-[#637089]">{{ canvasItems.length }} 项</span>
+          </div>
+          <div class="p-2 relative w-full overflow-hidden" :style="{ height: 'calc(100% - 28px)' }">
+            <div class="relative" :style="{ width: minMapContentSize.width + 'px', height: minMapContentSize.height + 'px' }">
+              <template v-for="(item, i) in canvasItems" :key="item.instanceId">
+                <div
+                  class="absolute rounded-sm border text-[7px] flex items-center justify-center overflow-hidden leading-none"
+                  :class="selectedIndex === i ? 'border-[#2F6BFF] bg-blue-50 text-[#2F6BFF]' : 'border-[#b0b8c8] bg-white text-[#637089]'"
+                  :style="getMinimapItemStyle(i)"
+                >{{ item.name.slice(0, 4) }}</div>
+              </template>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -309,7 +331,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, onMounted, nextTick } from 'vue'
 import { sendToPlatform } from '../composables/usePostMessage'
 import { useComponentStore } from '../composables/useComponentStore'
 import type { StoredComponent, CanvasItem } from '../types'
@@ -486,12 +508,40 @@ const canvasWidth = computed(() => {
 const zoomLevel = ref(100)
 function zoomIn() { if (zoomLevel.value < 150) zoomLevel.value += 10 }
 function zoomOut() { if (zoomLevel.value > 20) zoomLevel.value -= 10 }
+function resetZoom() { zoomLevel.value = 100 }
+
+// ===== 小地图 =====
+const minimapWidth = 200
+const minimapHeight = computed(() => Math.min(320, Math.max(100, canvasItems.value.length * 32 + 28 + 12)))
+const minMapContentSize = computed(() => {
+  const len = Math.max(canvasItems.value.length, 1)
+  return { width: minimapWidth - 16, height: len * 28 }
+})
+function getMinimapItemStyle(idx: number) {
+  return {
+    top: (idx * 28) + 'px',
+    left: '0',
+    width: (minimapWidth - 16) + 'px',
+    height: '24px',
+  }
+}
 
 // ===== 无限画布拖拽平移 =====
 const isPanning = ref(false)
 const panStart = ref({ x: 0, y: 0 })
 const panOffset = ref({ x: 0, y: 0 })
 const canvasAreaRef = ref<HTMLElement | null>(null)
+
+onMounted(() => {
+  nextTick(() => {
+    const el = canvasAreaRef.value
+    if (el) {
+      const rect = el.getBoundingClientRect()
+      // 初始居中：水平偏移10%，垂直偏移40px让卡片在视口中居中
+      panOffset.value = { x: rect.width * 0.08, y: 40 }
+    }
+  })
+})
 
 const infiniteCanvasStyleRef = computed(() => {
   const s = zoomLevel.value / 100
