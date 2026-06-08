@@ -170,10 +170,10 @@
 
         <!-- ===== 浮动模块预览浮层（不在右面板，浮于画布右侧）===== -->
         <div v-if="showModulePreview && previewingModule"
-          class="absolute top-4 right-4 z-30 w-[375px] bg-white rounded-xl shadow-2xl border border-[#E6EAF2] overflow-hidden transition-all duration-200"
+          class="absolute top-4 right-4 z-30 w-[375px] bg-white rounded-xl shadow-2xl border border-[#E6EAF2] overflow-hidden transition-all duration-200 flex flex-col"
           style="max-height: calc(100% - 32px);">
           <!-- 预览头部 -->
-          <div class="flex items-center justify-between px-4 py-2.5 border-b border-[#E6EAF2] bg-white">
+          <div class="flex items-center justify-between px-4 py-2.5 border-b border-[#E6EAF2] bg-white shrink-0">
             <div class="flex items-center gap-2 min-w-0">
               <div class="w-6 h-6 rounded bg-blue-50 flex items-center justify-center text-[#2F6BFF] shrink-0">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
@@ -183,7 +183,7 @@
                 <span class="text-[10px] text-[#637089]">v{{ previewingModule.version }}</span>
               </div>
             </div>
-            <div class="flex items-center gap-1">
+            <div class="flex items-center gap-1 shrink-0">
               <button @click="addModuleToCanvas(previewingModule)" class="flex items-center gap-1 px-2.5 py-1 text-xs text-white bg-[#2F6BFF] rounded-lg hover:bg-blue-600 transition-colors" title="添加到画布">
                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                 添加
@@ -193,8 +193,8 @@
               </button>
             </div>
           </div>
-          <!-- 预览内容区域（手机尺寸） -->
-          <div class="flex flex-col bg-[#F6F8FB]" style="max-height: calc(100vh - 200px);">
+          <!-- 预览内容区域（手机尺寸，内容溢出时滚动） -->
+          <div class="flex-1 overflow-y-auto bg-[#F6F8FB]">
             <div class="flex items-center justify-center p-3">
               <div class="bg-white rounded-xl overflow-hidden border border-[#E6EAF2] shadow-sm" style="width: 100%;">
                 <div class="bg-[#152033] text-white text-[10px] text-center py-1 rounded-t-xl">预览</div>
