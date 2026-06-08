@@ -239,9 +239,9 @@
         </div>
         <!-- ===== 组件列表面板（取代小地图 + 浮动列表） ===== -->
         <div v-if="canvasItems.length" class="absolute bottom-4 right-[208px] z-40 bg-white rounded-xl shadow-lg border border-[#E6EAF2] overflow-hidden select-none"
-          style="min-width: 220px; max-width: 260px; max-height: 320px;">
-          <div class="flex items-center justify-between px-3 py-2 border-b border-[#E6EAF2] bg-[#F6F8FB]">
-            <span class="text-[11px] font-medium text-[#152033]">组件列表</span>
+          style="max-height: 320px;">
+          <div class="flex items-center justify-between px-2.5 py-1.5 border-b border-[#E6EAF2] bg-[#F6F8FB]">
+            <span class="text-[10px] font-medium text-[#152033]">已添加组件列表</span>
             <span class="text-[10px] text-[#637089]">{{ canvasItems.length }} 项</span>
           </div>
           <div class="overflow-y-auto" style="max-height: 280px;">
@@ -253,7 +253,7 @@
               @dragend="onListDragEnd"
               @mouseenter="hoveredListIndex = i"
               @mouseleave="hoveredListIndex = null"
-              class="flex items-center gap-2 px-3 py-2 border-b border-[#E6EAF2] last:border-b-0 transition-colors cursor-pointer"
+              class="flex items-center gap-1.5 px-2.5 py-1.5 border-b border-[#E6EAF2] last:border-b-0 transition-colors cursor-pointer"
               :class="{
                 'bg-blue-50/30': selectedIndex === i,
                 'bg-blue-50/60': hoveredListIndex === i,
@@ -261,21 +261,21 @@
               }"
               @click="selectItem(i)">
               <div class="cursor-grab active:cursor-grabbing text-[#637089] opacity-40 hover:opacity-100 transition-opacity shrink-0" @click.stop>
-                <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 6a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm0 6a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm0 6a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm6-12a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm0 6a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm0 6a2 2 0 1 1-4 0 2 2 0 0 1 4 0z"/></svg>
+                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><path d="M8 6a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm0 6a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm0 6a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm6-12a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm0 6a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm0 6a2 2 0 1 1-4 0 2 2 0 0 1 4 0z"/></svg>
               </div>
               <div class="flex-1 min-w-0 flex items-center gap-1.5">
-                <span v-if="item.type === 'layout'" class="text-[10px]">{{ getLayoutIcon(item.name) }}</span>
-                <svg v-else class="w-3 h-3 text-[#2F6BFF] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
-                <span class="text-xs text-[#152033] truncate">{{ item.name }}</span>
+                <span v-if="item.type === 'layout'" class="text-[9px]">{{ getLayoutIcon(item.name) }}</span>
+                <svg v-else class="w-2.5 h-2.5 text-[#2F6BFF] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+                <span class="text-[11px] text-[#152033] truncate">{{ item.name }}</span>
                 <span class="text-[9px] px-1 py-0.5 rounded shrink-0"
                   :class="item.type === 'layout' ? 'bg-amber-50 text-amber-600' : 'bg-blue-50 text-[#2F6BFF]'">
                   {{ item.type === 'layout' ? '容器' : '模块' }}
                 </span>
               </div>
               <div class="flex items-center gap-0.5 shrink-0 opacity-0 hover:opacity-100 transition-all">
-                <button v-if="i > 0" @click.stop="moveItem(i, -1)" class="p-0.5 rounded hover:bg-[#F6F8FB] text-[#637089]" title="上移"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/></svg></button>
-                <button v-if="i < canvasItems.length - 1" @click.stop="moveItem(i, 1)" class="p-0.5 rounded hover:bg-[#F6F8FB] text-[#637089]" title="下移"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg></button>
-                <button @click.stop="removeItem(i)" class="p-0.5 rounded hover:bg-red-50 text-[#637089] hover:text-red-500" title="移除"><svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
+                <button v-if="i > 0" @click.stop="moveItem(i, -1)" class="p-0.5 rounded hover:bg-[#F6F8FB] text-[#637089]" title="上移"><svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/></svg></button>
+                <button v-if="i < canvasItems.length - 1" @click.stop="moveItem(i, 1)" class="p-0.5 rounded hover:bg-[#F6F8FB] text-[#637089]" title="下移"><svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg></button>
+                <button @click.stop="removeItem(i)" class="p-0.5 rounded hover:bg-red-50 text-[#637089] hover:text-red-500" title="移除"><svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg></button>
               </div>
             </div>
           </div>
