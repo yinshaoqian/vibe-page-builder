@@ -293,6 +293,15 @@
   <div v-if="showPreview" class="fixed inset-0 z-50 bg-[#F6F8FB] flex flex-col" @click.self="showPreview = false">
     <div class="h-12 bg-white border-b border-border flex items-center px-4 gap-3 shrink-0">
       <span class="text-sm font-semibold text-text-primary">页面预览</span>
+      <div class="flex items-center gap-1 bg-surface-bg rounded-lg p-0.5 border border-border">
+        <button v-for="d in previewDevices" :key="d.key"
+          class="px-2.5 py-1 text-xs rounded-md transition-colors flex items-center gap-1.5"
+          :class="previewDevice === d.key ? 'bg-white text-text-primary shadow-sm' : 'text-text-secondary hover:text-text-primary'"
+          @click="previewDevice = d.key">
+          <span class="text-xs">{{ d.icon }}</span>
+          {{ d.label }}
+        </button>
+      </div>
       <div class="flex items-center gap-1 ml-auto">
         <span class="text-xs text-text-secondary">{{ canvasItems.length }} 个组件</span>
         <button @click="showPreview = false" class="p-1.5 rounded hover:bg-surface-bg text-text-secondary" title="关闭预览">
@@ -301,36 +310,38 @@
       </div>
     </div>
     <div class="flex-1 overflow-y-auto">
-      <div class="max-w-[1024px] mx-auto py-8 px-4">
-        <div v-if="!canvasItems.length" class="flex flex-col items-center justify-center text-center py-24">
-          <svg class="w-14 h-14 mb-3 text-border" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4v16m8-8H4"/></svg>
-          <p class="text-sm text-text-secondary">尚未添加任何组件</p>
-        </div>
-        <div v-else class="space-y-6">
-          <div v-for="(item, i) in canvasItems" :key="item.instanceId"
-            class="bg-white rounded-xl shadow-sm border border-border overflow-hidden">
-            <div class="flex items-center justify-between px-4 py-2 bg-surface-bg border-b border-border">
-              <div class="flex items-center gap-2">
-                <span v-if="item.type === 'layout'" class="text-base">{{ getLayoutIcon(item.name) }}</span>
-                <svg v-else class="w-4 h-4 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
-                <span class="text-sm font-medium text-text-primary">{{ item.name }}</span>
-                <span class="text-[10px] px-1.5 py-0.5 rounded"
-                  :class="item.type === 'layout' ? 'bg-amber-50 text-amber-600' : 'bg-blue-50 text-brand'">
-                  {{ item.type === 'layout' ? '容器' : '模块' }}
-                </span>
-              </div>
-              <span class="text-[10px] text-text-secondary">#{{ i + 1 }}</span>
-            </div>
-            <div class="p-4">
-              <div v-if="item.type === 'layout'" class="flex items-center justify-center py-8 text-text-secondary border-2 border-dashed border-border rounded-lg">
-                <div class="text-center">
-                  <span class="text-3xl mb-1 block">{{ getLayoutIcon(item.name) }}</span>
-                  <span class="text-sm">{{ item.name }}</span>
-                  <p class="text-xs text-text-secondary mt-1">布局容器区域</p>
+      <div class="flex justify-center py-8 px-4">
+        <div :style="{ width: previewWidth, minWidth: previewWidth }">
+          <div v-if="!canvasItems.length" class="flex flex-col items-center justify-center text-center py-24 bg-white rounded-xl shadow-sm border border-border">
+            <svg class="w-14 h-14 mb-3 text-border" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4v16m8-8H4"/></svg>
+            <p class="text-sm text-text-secondary">尚未添加任何组件</p>
+          </div>
+          <div v-else class="space-y-6">
+            <div v-for="(item, i) in canvasItems" :key="item.instanceId"
+              class="bg-white rounded-xl shadow-sm border border-border overflow-hidden">
+              <div class="flex items-center justify-between px-4 py-2 bg-surface-bg border-b border-border">
+                <div class="flex items-center gap-2">
+                  <span v-if="item.type === 'layout'" class="text-base">{{ getLayoutIcon(item.name) }}</span>
+                  <svg v-else class="w-4 h-4 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+                  <span class="text-sm font-medium text-text-primary">{{ item.name }}</span>
+                  <span class="text-[10px] px-1.5 py-0.5 rounded"
+                    :class="item.type === 'layout' ? 'bg-amber-50 text-amber-600' : 'bg-blue-50 text-brand'">
+                    {{ item.type === 'layout' ? '容器' : '模块' }}
+                  </span>
                 </div>
+                <span class="text-[10px] text-text-secondary">#{{ i + 1 }}</span>
               </div>
-              <div v-else-if="item.type === 'module'">
-                <ModulePreviewOnCanvas :component-id="item.componentId" />
+              <div class="p-4">
+                <div v-if="item.type === 'layout'" class="flex items-center justify-center py-8 text-text-secondary border-2 border-dashed border-border rounded-lg">
+                  <div class="text-center">
+                    <span class="text-3xl mb-1 block">{{ getLayoutIcon(item.name) }}</span>
+                    <span class="text-sm">{{ item.name }}</span>
+                    <p class="text-xs text-text-secondary mt-1">布局容器区域</p>
+                  </div>
+                </div>
+                <div v-else-if="item.type === 'module'">
+                  <ModulePreviewOnCanvas :component-id="item.componentId" />
+                </div>
               </div>
             </div>
           </div>
@@ -406,6 +417,19 @@ const selectedIndex = ref<number | null>(null)
 const previewingModule = ref<StoredComponent | null>(null)
 const showModulePreview = ref(false)
 const showPreview = ref(false)
+const previewDevice = ref('mobile')
+const previewDevices = [
+  { key: 'mobile', label: '手机', icon: '📱' },
+  { key: 'tablet', label: '平板', icon: '📟' },
+  { key: 'desktop', label: '桌面', icon: '🖥' },
+]
+const previewWidth = computed(() => {
+  switch (previewDevice.value) {
+    case 'mobile': return '375px'
+    case 'tablet': return '768px'
+    default: return '100%'
+  }
+})
 
 function handlePreview() {
   if (!canvasItems.value.length) {
