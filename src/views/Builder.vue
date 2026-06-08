@@ -207,19 +207,21 @@
         </div>
 
         <!-- ===== 组件列表抽屉（右下角） ===== -->
-        <div class="fixed left-[268px] bottom-4 z-50 flex flex-col items-start">
-          <div v-if="showComponentList && canvasItems.length" class="mb-2 bg-white rounded-xl shadow-2xl border border-[#E6EAF2] overflow-hidden transition-all">
+        <div class="fixed left-[268px] bottom-4 z-50 flex flex-col items-start"
+          @mouseenter="showComponentList = true"
+          @mouseleave="showComponentList = false">
+          <div v-if="showComponentList && canvasItems.length" class="bg-white rounded-xl shadow-2xl border border-[#E6EAF2] overflow-hidden transition-all"
+            @mouseenter="showComponentList = true">
             <div class="flex items-center justify-between px-4 py-2.5 border-b border-[#E6EAF2] bg-white">
               <span class="text-sm font-medium text-[#152033]">画布组件列表</span>
               <span class="text-[10px] text-[#637089]">{{ canvasItems.length }} 项</span>
             </div>
             <div class="max-h-64 overflow-y-auto">
               <div v-for="(item, i) in canvasItems" :key="item.instanceId"
-                class="flex items-center gap-2 px-4 py-2.5 border-b border-[#E6EAF2] last:border-b-0 hover:bg-[#F6F8FB] transition-colors group cursor-pointer"
+                class="flex items-center gap-2 px-4 py-2.5 border-b border-[#E6EAF2] last:border-b-0 hover:bg-[#F6F8FB] transition-colors cursor-pointer"
                 :class="{ 'bg-blue-50/30': selectedIndex === i }"
                 @click="selectItem(i)">
-                <!-- 拖拽手柄 -->
-                <div class="cursor-grab active:cursor-grabbing text-[#637089] opacity-40 group-hover:opacity-100 transition-opacity shrink-0">
+                <div class="cursor-grab active:cursor-grabbing text-[#637089] opacity-40 hover:opacity-100 transition-opacity shrink-0">
                   <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M8 6a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm0 6a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm0 6a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm6-12a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm0 6a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm0 6a2 2 0 1 1-4 0 2 2 0 0 1 4 0z"/></svg>
                 </div>
                 <div class="flex-1 min-w-0">
@@ -233,8 +235,7 @@
                     </span>
                   </div>
                 </div>
-                <!-- 上移 / 下移 / 删除 -->
-                <div class="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-all shrink-0">
+                <div class="flex items-center gap-0.5 opacity-0 hover:opacity-100 transition-all shrink-0">
                   <button v-if="i > 0" @click.stop="moveItem(i, -1)" class="p-1 rounded hover:bg-[#F6F8FB] text-[#637089]" title="上移">
                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"/></svg>
                   </button>
@@ -248,10 +249,11 @@
               </div>
             </div>
           </div>
+          <!-- invisible bridge: connects button ↔ drawer so hover stays continuous -->
+          <div v-if="showComponentList" class="h-2 w-full -mt-1"></div>
           <!-- 列表切换按钮 -->
-          <button @click="showComponentList = !showComponentList"
+          <button
             class="w-10 h-10 flex items-center justify-center rounded-full bg-white shadow-lg border border-[#E6EAF2] text-[#637089] hover:text-[#152033] hover:shadow-xl transition-all"
-            :class="{ 'ring-2 ring-[#2F6BFF]': showComponentList }"
             title="组件列表">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
           </button>
