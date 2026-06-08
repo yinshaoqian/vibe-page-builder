@@ -207,8 +207,8 @@
         </div>
 
         <!-- ===== 组件列表抽屉（右下角） ===== -->
-        <div class="absolute bottom-4 right-4 z-20 flex flex-col items-end">
-          <div v-if="showComponentList && canvasItems.length" class="mb-2 w-72 bg-white rounded-xl shadow-2xl border border-[#E6EAF2] overflow-hidden transition-all">
+        <div class="fixed left-4 bottom-4 z-50 flex flex-col items-start">
+          <div v-if="showComponentList && canvasItems.length" class="mb-2 bg-white rounded-xl shadow-2xl border border-[#E6EAF2] overflow-hidden transition-all">
             <div class="flex items-center justify-between px-4 py-2.5 border-b border-[#E6EAF2] bg-white">
               <span class="text-sm font-medium text-[#152033]">画布组件列表</span>
               <span class="text-[10px] text-[#637089]">{{ canvasItems.length }} 项</span>
