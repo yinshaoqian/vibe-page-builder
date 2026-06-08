@@ -106,12 +106,12 @@
         @dragleave="onDragLeave"
         @drop="onDrop">
         <div class="flex items-start justify-center min-h-full">
-          <div class="bg-white rounded-xl shadow-sm border border-[#E6EAF2] transition-all overflow-hidden"
-            :style="{ width: canvasWidth, transform: `scale(${zoomLevel / 100})`, transformOrigin: 'top center' }">
-            <div class="min-h-[500px] relative">
+          <div class="bg-white rounded-xl shadow-sm border border-[#E6EAF2] transition-all flex flex-col"
+            :style="{ width: canvasWidth, transform: `scale(${zoomLevel / 100})`, transformOrigin: 'top center', maxHeight: '100%' }">
+            <div class="flex-1 min-h-[500px] relative overflow-y-auto">
               <!-- 空状态 -->
               <div v-if="!canvasItems.length"
-                class="flex flex-col items-center justify-center py-24 text-center select-none"
+                class="flex flex-col items-center justify-center py-24 text-center select-none min-h-[500px]"
                 :class="dragOver ? 'bg-blue-50/40' : ''">
                 <svg class="w-14 h-14 mb-3 text-[#E6EAF2]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4v16m8-8H4"/></svg>
                 <p class="text-sm text-[#637089]">拖拽组件模块到此处</p>
@@ -170,7 +170,7 @@
 
         <!-- ===== 浮动模块预览浮层（不在右面板，浮于画布右侧）===== -->
         <div v-if="showModulePreview && previewingModule"
-          class="absolute top-4 right-4 z-30 w-[375px] bg-white rounded-xl shadow-2xl border border-[#E6EAF2] overflow-hidden transition-all duration-200 flex flex-col"
+          class="absolute top-4 left-4 z-30 w-[375px] bg-white rounded-xl shadow-2xl border border-[#E6EAF2] overflow-hidden transition-all duration-200 flex flex-col"
           style="max-height: calc(100% - 32px);">
           <!-- 预览头部 -->
           <div class="flex items-center justify-between px-4 py-2.5 border-b border-[#E6EAF2] bg-white shrink-0">
@@ -259,46 +259,7 @@
       </div>
     </div>
 
-    <!-- ===== 右侧信息面板（仅画布选中项，不含模块预览） ===== -->
-    <aside v-if="rightPanelVisible && rightPanelMode === 'canvas-info' && selectedIndex !== null" class="w-72 bg-white border-l border-[#E6EAF2] flex flex-col shrink-0 shadow-sm z-10">
-      <div class="h-12 border-b border-[#E6EAF2] flex items-center justify-between px-4 shrink-0">
-        <span class="text-sm font-medium text-[#152033] truncate">{{ selectedItem?.name }}</span>
-        <button @click="rightPanelVisible = false" class="p-1 rounded hover:bg-[#F6F8FB] text-[#637089]">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
-        </button>
-      </div>
-      <div class="flex-1 overflow-y-auto p-4">
-        <div class="bg-[#F6F8FB] rounded-lg p-3 mb-4 text-xs">
-          <div class="flex items-center gap-2 mb-2">
-            <span class="font-medium text-[#152033]">名称</span>
-            <span>{{ selectedItem?.name }}</span>
-          </div>
-          <div class="flex items-center gap-2 mb-2">
-            <span class="font-medium text-[#152033]">类型</span>
-            <span class="px-1.5 py-0.5 rounded text-[10px]"
-              :class="selectedItem?.type === 'layout' ? 'bg-amber-50 text-amber-600' : 'bg-blue-50 text-[#2F6BFF]'">
-              {{ selectedItem?.type === 'layout' ? '布局容器' : '组件模块' }}
-            </span>
-          </div>
-          <div class="flex items-center gap-2">
-            <span class="font-medium text-[#152033]">位置</span>
-            <span>第 {{ (selectedIndex ?? 0) + 1 }} / {{ canvasItems.length }} 个</span>
-          </div>
-        </div>
-
-        <div v-if="selectedItem?.type === 'module' && selectedModuleData" class="mb-4">
-          <h4 class="text-xs font-medium text-[#152033] mb-2">组件预览</h4>
-          <div class="bg-white rounded-xl border border-[#E6EAF2] overflow-hidden">
-            <ModulePreviewOnCanvas :component-id="selectedItem.componentId" />
-          </div>
-        </div>
-
-        <button @click="removeItem(selectedIndex!)" class="w-full flex items-center justify-center gap-1.5 px-3 py-2 text-sm text-red-500 border border-red-200 rounded-lg hover:bg-red-50 transition-colors">
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-          从画布移除
-        </button>
-      </div>
-    </aside>
+    <!-- ===== 右侧信息面板已移除 ===== -->
   </div>
 </template>
 
@@ -367,25 +328,11 @@ function onDrop() {
 const selectedIndex = ref<number | null>(null)
 const previewingModule = ref<StoredComponent | null>(null)
 const showModulePreview = ref(false)
-const rightPanelMode = ref<'canvas-info' | null>(null)
-const rightPanelVisible = ref(false)
-
-const selectedItem = computed(() => {
-  if (selectedIndex.value === null) return null
-  return canvasItems.value[selectedIndex.value] ?? null
-})
-
-const selectedModuleData = computed(() => {
-  if (!selectedItem.value || selectedItem.value.type !== 'module') return null
-  return getComponent(selectedItem.value.componentId)
-})
 
 function selectModule(mod: StoredComponent) {
   previewingModule.value = mod
   showModulePreview.value = true
   selectedIndex.value = null
-  rightPanelMode.value = null
-  rightPanelVisible.value = false
 }
 
 function closeModulePreview() {
@@ -397,8 +344,6 @@ function selectItem(idx: number) {
   selectedIndex.value = idx
   previewingModule.value = null
   showModulePreview.value = false
-  rightPanelMode.value = 'canvas-info'
-  rightPanelVisible.value = true
 }
 
 function addModuleToCanvas(mod: StoredComponent) {
@@ -426,7 +371,6 @@ function removeItem(idx: number) {
       ? Math.min(idx, canvasItems.value.length - 1)
       : null
     if (!canvasItems.value.length) {
-      rightPanelVisible.value = false
       showComponentList.value = false
     }
   } else if (selectedIndex.value !== null && selectedIndex.value > idx) {
