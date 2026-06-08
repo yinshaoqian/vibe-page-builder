@@ -1,5 +1,5 @@
 <template>
-  <div class="app-container min-h-screen flex flex-col">
+  <div class="app-container h-screen flex flex-col overflow-hidden">
     <!-- 顶部 Tab 导航栏 -->
     <header class="h-12 bg-surface-card border-b border-border flex items-center px-4 shrink-0 z-50">
       <div class="flex items-center gap-1 mr-8">
