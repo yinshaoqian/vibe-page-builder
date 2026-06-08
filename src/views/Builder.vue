@@ -257,12 +257,12 @@
               @dragend="onListDragEnd"
               @mouseenter="hoveredListIndex = i"
               @mouseleave="hoveredListIndex = null"
-              class="flex items-center gap-1.5 px-2.5 py-1.5 border-b border-[#E6EAF2] last:border-b-0 transition-colors cursor-pointer"
+              class="flex items-center gap-1.5 px-2.5 py-1.5 border-b border-[#E6EAF2] last:border-b-0 border-l-2 border-l-transparent transition-colors cursor-pointer"
               :class="{
                 'bg-blue-50/30': selectedIndex === i,
                 'bg-blue-50/60': hoveredListIndex === i && selectedIndex !== i,
                 'opacity-50': dragSourceIdx === i,
-                'border-l-2 border-l-brand': selectedIndex === i,
+                'border-l-brand': selectedIndex === i,
               }"
               @click="selectItem(i)">
               <div class="cursor-grab active:cursor-grabbing text-[#637089] opacity-40 hover:opacity-100 transition-opacity shrink-0 flex items-center gap-1" @click.stop>
