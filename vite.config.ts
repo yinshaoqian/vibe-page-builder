@@ -5,9 +5,6 @@ export default defineConfig({
   plugins: [vue()],
   server: {
     port: 5000,
-    hmr: {
-      port: 6000,
-      path: '/hot/vite-hmr'
-    }
+    allowedHosts: true
   }
 })

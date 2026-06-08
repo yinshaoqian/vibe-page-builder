@@ -69,9 +69,3 @@ onMounted(() => { mountPreview() })
 onBeforeUnmount(() => { unmountPreview() })
 </script>
 
-<style scoped>
-.module-preview-on-canvas :deep(.preview-root) {
-  transform-origin: top left;
-  overflow: hidden;
-}
-</style>
