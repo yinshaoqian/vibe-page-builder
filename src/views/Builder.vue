@@ -93,7 +93,11 @@
         </div>
         <div class="flex items-center gap-2 ml-auto">
           <span v-if="canvasItems.length" class="text-xs text-[#637089]">{{ canvasItems.length }} 个组件</span>
-          <button @click="handleSave" class="flex items-center gap-1.5 px-4 py-1.5 text-sm text-white bg-[#2F6BFF] rounded-lg hover:bg-blue-600 transition-colors shadow-sm">
+          <button @click="handlePreview" class="flex items-center gap-1.5 px-4 py-1.5 text-sm text-white bg-brand rounded-lg hover:bg-blue-600 transition-colors shadow-sm">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+            预览
+          </button>
+          <button @click="handleSave" class="flex items-center gap-1.5 px-4 py-1.5 text-sm text-white bg-brand rounded-lg hover:bg-blue-600 transition-colors shadow-sm">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"/></svg>
             保存
           </button>
@@ -202,7 +206,7 @@
               </div>
             </div>
             <div class="flex items-center gap-1 shrink-0">
-              <button @click="addModuleToCanvas(previewingModule)" class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-[#2F6BFF] rounded-lg shadow-sm hover:bg-blue-600 hover:shadow-md transition-all" title="添加到画布">
+              <button @click="addModuleToCanvas(previewingModule)" class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-brand rounded-lg shadow-sm hover:bg-blue-600 hover:shadow-md transition-all" title="添加到画布">
                 <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
                 添加
               </button>
@@ -284,6 +288,56 @@
 
     <!-- ===== 右侧信息面板已移除 ===== -->
   </div>
+
+  <!-- ===== 全页预览浮层 ===== -->
+  <div v-if="showPreview" class="fixed inset-0 z-50 bg-[#F6F8FB] flex flex-col" @click.self="showPreview = false">
+    <div class="h-12 bg-white border-b border-border flex items-center px-4 gap-3 shrink-0">
+      <span class="text-sm font-semibold text-text-primary">页面预览</span>
+      <div class="flex items-center gap-1 ml-auto">
+        <span class="text-xs text-text-secondary">{{ canvasItems.length }} 个组件</span>
+        <button @click="showPreview = false" class="p-1.5 rounded hover:bg-surface-bg text-text-secondary" title="关闭预览">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="flex-1 overflow-y-auto">
+      <div class="max-w-[1024px] mx-auto py-8 px-4">
+        <div v-if="!canvasItems.length" class="flex flex-col items-center justify-center text-center py-24">
+          <svg class="w-14 h-14 mb-3 text-border" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 4v16m8-8H4"/></svg>
+          <p class="text-sm text-text-secondary">尚未添加任何组件</p>
+        </div>
+        <div v-else class="space-y-6">
+          <div v-for="(item, i) in canvasItems" :key="item.instanceId"
+            class="bg-white rounded-xl shadow-sm border border-border overflow-hidden">
+            <div class="flex items-center justify-between px-4 py-2 bg-surface-bg border-b border-border">
+              <div class="flex items-center gap-2">
+                <span v-if="item.type === 'layout'" class="text-base">{{ getLayoutIcon(item.name) }}</span>
+                <svg v-else class="w-4 h-4 text-brand" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+                <span class="text-sm font-medium text-text-primary">{{ item.name }}</span>
+                <span class="text-[10px] px-1.5 py-0.5 rounded"
+                  :class="item.type === 'layout' ? 'bg-amber-50 text-amber-600' : 'bg-blue-50 text-brand'">
+                  {{ item.type === 'layout' ? '容器' : '模块' }}
+                </span>
+              </div>
+              <span class="text-[10px] text-text-secondary">#{{ i + 1 }}</span>
+            </div>
+            <div class="p-4">
+              <div v-if="item.type === 'layout'" class="flex items-center justify-center py-8 text-text-secondary border-2 border-dashed border-border rounded-lg">
+                <div class="text-center">
+                  <span class="text-3xl mb-1 block">{{ getLayoutIcon(item.name) }}</span>
+                  <span class="text-sm">{{ item.name }}</span>
+                  <p class="text-xs text-text-secondary mt-1">布局容器区域</p>
+                </div>
+              </div>
+              <div v-else-if="item.type === 'module'">
+                <ModulePreviewOnCanvas :component-id="item.componentId" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -351,6 +405,15 @@ function onDrop() {
 const selectedIndex = ref<number | null>(null)
 const previewingModule = ref<StoredComponent | null>(null)
 const showModulePreview = ref(false)
+const showPreview = ref(false)
+
+function handlePreview() {
+  if (!canvasItems.value.length) {
+    alert('请先添加组件到画布')
+    return
+  }
+  showPreview.value = true
+}
 
 function selectModule(mod: StoredComponent) {
   previewingModule.value = mod
